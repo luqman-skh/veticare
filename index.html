@@ -50,6 +50,10 @@
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     <span>Billing & Invoices</span>
                 </a>
+                <a href="#reports" class="nav-item" data-view="reports">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                    <span>Insights & Reports</span>
+                </a>
             </nav>
             
             <div class="sidebar-footer">
@@ -414,13 +418,125 @@
                     </div>
                 </section>
 
-                <!-- Billing Placeholder -->
+                <!-- Billing View -->
                 <section id="view-billing" class="view-panel">
-                    <div class="placeholder-view">
-                        <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                        <h2>Billing & Reporting Module</h2>
-                        <p>Phase 3: Will automate invoice generation, compute treatment charges and medication fees, and compile clinic revenue charts.</p>
-                        <button class="primary-btn mt-4" disabled>Launch Invoicing (Phase 3)</button>
+                    <div class="panel-header-actions">
+                        <div class="filter-group" style="flex-grow: 1;">
+                            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="text" id="billing-search" class="select-input" style="border-radius: var(--border-radius-pill); padding-left: 44px; width: 320px;" placeholder="Search invoices by owner or pet...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="billing-status-filter">Status:</label>
+                            <select id="billing-status-filter" class="select-input">
+                                <option value="all">All Invoices</option>
+                                <option value="Paid">Paid Only</option>
+                                <option value="Pending">Pending Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="panel-card">
+                        <div style="overflow-x: auto; width: 100%;">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left;" class="clinic-table">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 13px; font-weight: 700;">
+                                        <th style="padding: 16px;">Invoice ID</th>
+                                        <th style="padding: 16px;">Date</th>
+                                        <th style="padding: 16px;">Patient</th>
+                                        <th style="padding: 16px;">Treatment / Reason</th>
+                                        <th style="padding: 16px;">Total Amount</th>
+                                        <th style="padding: 16px;">Status</th>
+                                        <th style="padding: 16px; text-align: right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invoices-list" style="font-size: 14px;">
+                                    <!-- Populated dynamically by billing.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Reports & Insights View -->
+                <section id="view-reports" class="view-panel">
+                    <!-- Reports Metric Top Row -->
+                    <div class="metrics-grid" style="margin-bottom: 24px;">
+                        <div class="metric-card">
+                            <div class="metric-icon bg-success-soft">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-label">Total Invoice Revenue</span>
+                                <h3 class="metric-value" id="rep-total-revenue">$0.00</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon bg-primary-soft">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-label">Finished Consults</span>
+                                <h3 class="metric-value" id="rep-total-consults">0</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon bg-accent-soft">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-label">Vaccine Compliance</span>
+                                <h3 class="metric-value" id="rep-vaccine-rate">0%</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic SVG Visualizations Layout -->
+                    <div class="dashboard-details-grid" style="grid-template-columns: repeat(2, 1fr);">
+                        <!-- Revenue Area Chart -->
+                        <div class="panel-card">
+                            <div class="panel-card-header">
+                                <h3>Revenue Summary (Last 7 Days)</h3>
+                            </div>
+                            <div class="panel-card-body" style="height: 260px; display: flex; align-items: center; justify-content: center;" id="revenue-chart-container">
+                                <!-- Generated by reports.js -->
+                            </div>
+                        </div>
+
+                        <!-- Diagnosis Bar Chart -->
+                        <div class="panel-card">
+                            <div class="panel-card-header">
+                                <h3>Frequently Treated Diagnoses</h3>
+                            </div>
+                            <div class="panel-card-body" style="height: 260px; display: flex; align-items: center; justify-content: center;" id="diagnoses-chart-container">
+                                <!-- Generated by reports.js -->
+                            </div>
+                        </div>
+
+                        <!-- Upcoming Vaccine Tracker Table -->
+                        <div class="panel-card col-span-2">
+                            <div class="panel-card-header">
+                                <h3>Upcoming Vaccination Due Schedules</h3>
+                                <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Pets with non-vaccinated or partially-vaccinated profiles requiring booster scheduling</p>
+                            </div>
+                            <div class="panel-card-body">
+                                <div style="overflow-x: auto; width: 100%;">
+                                    <table style="width: 100%; border-collapse: collapse; text-align: left;" class="clinic-table">
+                                        <thead>
+                                            <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 12px; font-weight: 700;">
+                                                <th style="padding: 12px;">Pet Patient</th>
+                                                <th style="padding: 12px;">Species / Breed</th>
+                                                <th style="padding: 12px;">Owner Contact</th>
+                                                <th style="padding: 12px;">Current Status</th>
+                                                <th style="padding: 12px; text-align: right;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="vaccine-schedules-list" style="font-size: 13px;">
+                                            <!-- Populated dynamically by reports.js -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -666,11 +782,95 @@
         </div>
     </div>
 
+    <!-- Invoice Receipt Detail Modal -->
+    <div class="modal-overlay no-print" id="invoice-modal">
+        <div class="modal-card" style="max-width: 500px;">
+            <div class="modal-header no-print">
+                <h3>Invoice Details</h3>
+                <button class="modal-close" id="close-invoice-modal">&times;</button>
+            </div>
+            <div class="invoice-receipt-container" id="printable-receipt-content" style="padding: 32px; background: white; color: #0f172a; font-family: monospace; line-height: 1.5;">
+                <!-- Thermal receipt/Invoice content styled via CSS for printing -->
+                <div class="receipt-header" style="text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 16px; margin-bottom: 16px;">
+                    <h2 style="font-weight: 800; font-size: 20px; letter-spacing: -0.5px; margin-bottom: 4px; color: #0f172a;">VETICARE CLINIC</h2>
+                    <p style="font-size: 12px; color: #64748b;">123 Healthcare Ave, Medical District</p>
+                    <p style="font-size: 12px; color: #64748b;">Tel: (555) 123-4567</p>
+                </div>
+                
+                <div class="receipt-meta" style="font-size: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+                    <div>
+                        <strong>Invoice ID:</strong> <span id="inv-id">INV-000</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong>Date:</strong> <span id="inv-date">08/02/2026</span>
+                    </div>
+                </div>
+
+                <div class="receipt-parties" style="font-size: 11px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div style="text-align: left;">
+                        <strong style="text-transform: uppercase; font-size: 10px; color: #64748b;">Billing To:</strong>
+                        <p style="font-weight: 700; margin-top: 2px; color: #0f172a;" id="inv-owner-name">John Doe</p>
+                        <p id="inv-owner-email">john@example.com</p>
+                        <p id="inv-owner-phone">(555) 123-4567</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong style="text-transform: uppercase; font-size: 10px; color: #64748b;">Patient:</strong>
+                        <p style="font-weight: 700; margin-top: 2px; color: #0f172a;" id="inv-pet-name">Buddy</p>
+                        <p id="inv-pet-details">Dog / Golden Retriever</p>
+                    </div>
+                </div>
+
+                <div class="receipt-items" style="margin-bottom: 16px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #cbd5e1; font-weight: 700; color: #0f172a;">
+                                <th style="padding: 6px 0;">Item Description</th>
+                                <th style="padding: 6px 0; text-align: right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inv-charges-list" style="color: #0f172a;">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="receipt-totals" style="border-top: 2px dashed #cbd5e1; padding-top: 12px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; color: #0f172a;">
+                    <div style="display: flex; justify-content: space-between; width: 180px;">
+                        <span>Subtotal:</span>
+                        <span id="inv-subtotal">$0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; width: 180px;">
+                        <span>Tax (8%):</span>
+                        <span id="inv-tax">$0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; width: 180px; font-size: 15px; font-weight: 800; border-top: 1px solid #000; padding-top: 6px; margin-top: 4px; color: #0f172a;">
+                        <span>Total Due:</span>
+                        <span id="inv-total">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="receipt-status-stamp-box" style="text-align: center; margin-top: 20px; padding: 12px; border-radius: var(--border-radius-sm);" id="inv-status-stamp-box">
+                    <span id="inv-status-stamp" style="font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Paid</span>
+                </div>
+            </div>
+            <div class="modal-actions no-print" style="padding: 24px 32px; background: var(--bg-surface-elevated); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" class="secondary-btn" id="cancel-invoice-modal">Close</button>
+                <button type="button" class="accent-btn" id="print-invoice-btn" onclick="window.print()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Print
+                </button>
+                <button type="button" class="primary-btn" id="pay-invoice-btn">Record Payment</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="owners.js"></script>
     <script src="pets.js"></script>
     <script src="appointments.js"></script>
     <script src="treatments.js"></script>
+    <script src="billing.js"></script>
+    <script src="reports.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

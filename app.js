@@ -52,6 +52,14 @@ Object.assign(window.app, {
                 ];
                 app.db.set('treatments', defaultTreatments);
             }
+
+            if (!localStorage.getItem('veticare_invoices')) {
+                const defaultInvoices = [
+                    { id: 'INV-1001', treatmentId: 't-1', petId: 'p-1', dateTime: '2025-11-12T10:15', consultationFee: 50.00, treatmentCost: 120.00, medicineCost: 15.00, tax: 14.80, total: 199.80, status: 'Paid', paymentMethod: 'Card', reason: 'Minor Food Poisoning (Ingested spoiled grass)' },
+                    { id: 'INV-1002', treatmentId: 't-2', petId: 'p-3', dateTime: '2026-06-15T15:00', consultationFee: 50.00, treatmentCost: 85.00, medicineCost: 25.00, tax: 12.80, total: 172.80, status: 'Pending', paymentMethod: 'Pending', reason: 'Seasonal Atopic Dermatitis' }
+                ];
+                app.db.set('invoices', defaultInvoices);
+            }
         }
     },
 
@@ -142,6 +150,10 @@ Object.assign(window.app, {
                 app.appointments.renderAgenda();
             } else if (viewName === 'treatments') {
                 app.treatments.renderList();
+            } else if (viewName === 'billing') {
+                app.billing.renderList();
+            } else if (viewName === 'reports') {
+                app.reports.render();
             }
 
             if (updateHash) {
@@ -336,6 +348,8 @@ Object.assign(window.app, {
             document.getElementById('cancel-appointment-modal').onclick = () => app.ui.closeAllModals();
             document.getElementById('close-treatment-modal').onclick = () => app.ui.closeAllModals();
             document.getElementById('cancel-treatment-modal').onclick = () => app.ui.closeAllModals();
+            document.getElementById('close-invoice-modal').onclick = () => app.ui.closeAllModals();
+            document.getElementById('cancel-invoice-modal').onclick = () => app.ui.closeAllModals();
 
             // Submit Forms
             document.getElementById('owner-form').onsubmit = (e) => {
@@ -509,6 +523,73 @@ Object.assign(window.app, {
 
             modal.classList.add('active');
             document.getElementById('pet-name').focus();
+        },
+
+        openInvoiceModal: (invoice) => {
+            app.ui.closeAllModals();
+            const modal = document.getElementById('invoice-modal');
+
+            const pets = app.db.get('pets') || [];
+            const owners = app.db.get('owners') || [];
+
+            const pet = pets.find(p => p.id === invoice.petId) || { name: 'Unknown Pet', species: 'Other', breed: 'Unknown', ownerId: '' };
+            const owner = owners.find(o => o.id === pet.ownerId) || { name: 'Unknown Owner', email: '-', phone: '-' };
+
+            // Populate text elements
+            document.getElementById('inv-id').textContent = invoice.id;
+            document.getElementById('inv-date').textContent = new Date(invoice.dateTime).toLocaleString();
+            document.getElementById('inv-owner-name').textContent = owner.name;
+            document.getElementById('inv-owner-email').textContent = owner.email;
+            document.getElementById('inv-owner-phone').textContent = owner.phone;
+            document.getElementById('inv-pet-name').textContent = pet.name;
+            document.getElementById('inv-pet-details').textContent = `${pet.species} / ${pet.breed}`;
+
+            // Line items
+            const chargesList = document.getElementById('inv-charges-list');
+            chargesList.innerHTML = `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 8px 0; color: #0f172a;">Base Consultation Fee</td>
+                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.consultationFee).toFixed(2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 8px 0; color: #0f172a;">Clinical Treatment (${invoice.reason})</td>
+                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.treatmentCost).toFixed(2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 8px 0; color: #0f172a;">Pharmacy / Medicines</td>
+                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.medicineCost).toFixed(2)}</td>
+                </tr>
+            `;
+
+            // Totals
+            const subtotal = Number(invoice.consultationFee) + Number(invoice.treatmentCost) + Number(invoice.medicineCost);
+            const tax = Number(invoice.tax);
+            const total = Number(invoice.total);
+
+            document.getElementById('inv-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('inv-tax').textContent = `$${tax.toFixed(2)}`;
+            document.getElementById('inv-total').textContent = `$${total.toFixed(2)}`;
+
+            // Stamp boxes
+            const stampBox = document.getElementById('inv-status-stamp-box');
+            const stampLabel = document.getElementById('inv-status-stamp');
+            const payBtn = document.getElementById('pay-invoice-btn');
+
+            stampBox.className = 'receipt-status-stamp-box';
+            if (invoice.status === 'Paid') {
+                stampBox.classList.add('stamp-paid');
+                stampLabel.textContent = 'Paid';
+                payBtn.style.display = 'none';
+            } else {
+                stampBox.classList.add('stamp-pending');
+                stampLabel.textContent = 'Pending';
+                payBtn.style.display = 'inline-flex';
+                payBtn.onclick = () => {
+                    app.billing.pay(invoice.id);
+                };
+            }
+
+            modal.classList.add('active');
         }
     },
 

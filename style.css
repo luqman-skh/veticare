@@ -1846,3 +1846,167 @@ html[data-theme="light"] .moon-icon { display: block; }
         justify-content: space-between;
     }
 }
+
+/* Phase 3: Billing, Invoices & Receipt Printing */
+.invoice-status {
+    padding: 6px 12px;
+    border-radius: var(--border-radius-pill);
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+}
+
+.invoice-status.paid {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+}
+
+.invoice-status.pending {
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+}
+
+/* Printable thermal receipt layout */
+.invoice-receipt-container {
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Custom status stamps in receipt */
+.stamp-paid {
+    border: 3px double #10b981;
+    color: #10b981;
+    background-color: rgba(16, 185, 129, 0.05);
+}
+
+.stamp-pending {
+    border: 3px double #f59e0b;
+    color: #f59e0b;
+    background-color: rgba(245, 158, 11, 0.05);
+}
+
+/* PRINT STYLESHEET */
+@media print {
+    /* Hide all workspace containers, sidebars, dashboard elements */
+    body {
+        background: white !important;
+        color: black !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .app-container,
+    .sidebar,
+    .main-header,
+    .view-viewport,
+    .modal-overlay,
+    .modal-header,
+    .modal-actions,
+    .no-print {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+
+    /* Override overlay structure to display only receipt */
+    #invoice-modal.modal-overlay {
+        display: block !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 99999 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    #invoice-modal .modal-card {
+        background: white !important;
+        box-shadow: none !important;
+        border: none !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        visibility: visible !important;
+        display: block !important;
+    }
+
+    #printable-receipt-content {
+        display: block !important;
+        visibility: visible !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+        padding: 10px !important;
+        border: none !important;
+    }
+    
+    #printable-receipt-content * {
+        visibility: visible !important;
+        color: #0f172a !important;
+    }
+}
+
+/* SVG Chart styling */
+.chart-grid-line {
+    stroke: var(--border-color);
+    stroke-width: 1;
+    stroke-dasharray: 4,4;
+}
+
+.chart-axis-line {
+    stroke: var(--border-color);
+    stroke-width: 1.5;
+}
+
+.chart-axis-label {
+    font-size: 10px;
+    font-weight: 600;
+    fill: var(--text-muted);
+}
+
+.chart-line-stroke {
+    stroke: var(--color-primary);
+    stroke-width: 3.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.chart-line-point {
+    fill: var(--color-primary-light);
+    stroke: var(--bg-surface-elevated);
+    stroke-width: 2.5;
+    cursor: pointer;
+    transition: r var(--transition-fast), fill var(--transition-fast);
+}
+
+.chart-line-point:hover {
+    r: 7;
+    fill: var(--color-secondary);
+}
+
+.chart-bar-rect {
+    fill: var(--color-secondary);
+    rx: 4;
+    cursor: pointer;
+    transition: fill var(--transition-fast), opacity var(--transition-fast);
+}
+
+.chart-bar-rect:hover {
+    fill: var(--color-primary);
+    opacity: 0.95;
+}
+
+.chart-bar-label {
+    font-size: 11px;
+    font-weight: 700;
+    fill: var(--text-main);
+}
+

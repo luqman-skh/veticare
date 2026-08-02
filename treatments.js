@@ -137,6 +137,38 @@ app.treatments = {
 
         app.db.set('treatments', treatments);
 
+        // Update/create invoice matching this treatment
+        let invoices = app.db.get('invoices') || [];
+        const invIndex = invoices.findIndex(inv => inv.treatmentId === treatmentRecord.id);
+
+        const baseConsultation = 50.00;
+        const medsCost = vaccineGiven ? 25.00 : (medications ? 15.00 : 0.00);
+        const subtotal = baseConsultation + medsCost + cost;
+        const tax = subtotal * 0.08;
+        const total = subtotal + tax;
+
+        const invoiceRecord = {
+            id: invIndex !== -1 ? invoices[invIndex].id : 'INV-' + (Math.floor(Math.random() * 9000) + 1000),
+            treatmentId: treatmentRecord.id,
+            petId: treatmentRecord.petId,
+            dateTime: treatmentRecord.dateTime,
+            consultationFee: baseConsultation,
+            treatmentCost: cost,
+            medicineCost: medsCost,
+            tax: tax,
+            total: total,
+            status: invIndex !== -1 ? invoices[invIndex].status : 'Pending',
+            paymentMethod: invIndex !== -1 ? invoices[invIndex].paymentMethod : 'Pending',
+            reason: treatmentRecord.diagnosis
+        };
+
+        if (invIndex !== -1) {
+            invoices[invIndex] = invoiceRecord;
+        } else {
+            invoices.push(invoiceRecord);
+        }
+        app.db.set('invoices', invoices);
+
         // Automation vaccine linkage: If vaccine is selected, update pet's profile vaccination status
         if (vaccineGiven) {
             let pets = app.db.get('pets') || [];
