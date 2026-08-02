@@ -109,11 +109,16 @@ Object.assign(window.app, {
                 actionBtn.style.display = 'inline-flex';
                 actionText.textContent = 'Add Patient';
                 actionBtn.onclick = () => app.ui.openPetModal();
-            } else {
-                // In other views, we default to "Add Owner" or hide depending on context
+            } else if (viewName === 'appointments') {
                 actionBtn.style.display = 'inline-flex';
-                actionText.textContent = 'Add Owner';
-                actionBtn.onclick = () => app.ui.openOwnerModal();
+                actionText.textContent = 'Book Slot';
+                actionBtn.onclick = () => app.ui.openAppointmentModal();
+            } else if (viewName === 'treatments') {
+                actionBtn.style.display = 'inline-flex';
+                actionText.textContent = 'Record Visit';
+                actionBtn.onclick = () => app.ui.openTreatmentModal();
+            } else {
+                actionBtn.style.display = 'none';
             }
 
             // Switch visible panel in UI
@@ -132,6 +137,11 @@ Object.assign(window.app, {
                 app.owners.renderList();
             } else if (viewName === 'pets') {
                 app.pets.renderList();
+            } else if (viewName === 'appointments') {
+                app.appointments.initCalendar();
+                app.appointments.renderAgenda();
+            } else if (viewName === 'treatments') {
+                app.treatments.renderList();
             }
 
             if (updateHash) {
@@ -322,6 +332,10 @@ Object.assign(window.app, {
             document.getElementById('cancel-owner-modal').onclick = () => app.ui.closeAllModals();
             document.getElementById('close-pet-modal').onclick = () => app.ui.closeAllModals();
             document.getElementById('cancel-pet-modal').onclick = () => app.ui.closeAllModals();
+            document.getElementById('close-appointment-modal').onclick = () => app.ui.closeAllModals();
+            document.getElementById('cancel-appointment-modal').onclick = () => app.ui.closeAllModals();
+            document.getElementById('close-treatment-modal').onclick = () => app.ui.closeAllModals();
+            document.getElementById('cancel-treatment-modal').onclick = () => app.ui.closeAllModals();
 
             // Submit Forms
             document.getElementById('owner-form').onsubmit = (e) => {
@@ -332,6 +346,16 @@ Object.assign(window.app, {
             document.getElementById('pet-form').onsubmit = (e) => {
                 e.preventDefault();
                 app.pets.save();
+            };
+
+            document.getElementById('appointment-form').onsubmit = (e) => {
+                e.preventDefault();
+                app.appointments.save();
+            };
+
+            document.getElementById('treatment-form').onsubmit = (e) => {
+                e.preventDefault();
+                app.treatments.save();
             };
         },
 
@@ -345,8 +369,90 @@ Object.assign(window.app, {
             document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
             document.getElementById('owner-form').reset();
             document.getElementById('pet-form').reset();
+            document.getElementById('appointment-form').reset();
+            document.getElementById('treatment-form').reset();
             document.getElementById('owner-id').value = '';
             document.getElementById('pet-id').value = '';
+            document.getElementById('appointment-id').value = '';
+            document.getElementById('treatment-id').value = '';
+            document.getElementById('treatment-appt-id').value = '';
+            document.getElementById('appointment-collision-alert').style.display = 'none';
+        },
+
+        openAppointmentModal: (apptData = null, preselectedDate = null) => {
+            app.ui.closeAllModals();
+            const modal = document.getElementById('appointment-modal');
+            const title = document.getElementById('appointment-modal-title');
+            const petSelect = document.getElementById('appt-pet');
+            
+            // Populate pets select
+            const pets = app.db.get('pets') || [];
+            petSelect.innerHTML = '<option value="" disabled selected>Select Pet / Patient...</option>';
+            pets.sort((a, b) => a.name.localeCompare(b.name)).forEach(pet => {
+                petSelect.innerHTML += `<option value="${pet.id}">${pet.name} (${pet.species})</option>`;
+            });
+
+            if (apptData) {
+                title.textContent = 'Edit Consultation Slot';
+                document.getElementById('appointment-id').value = apptData.id;
+                document.getElementById('appt-pet').value = apptData.petId;
+                document.getElementById('appt-vet').value = apptData.vetName;
+                document.getElementById('appt-date').value = apptData.dateTime.split('T')[0];
+                document.getElementById('appt-time').value = apptData.dateTime.split('T')[1];
+                document.getElementById('appt-reason').value = apptData.reason;
+            } else {
+                title.textContent = 'Book Consultation Slot';
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('appt-date').value = preselectedDate || today;
+            }
+
+            modal.classList.add('active');
+        },
+
+        openTreatmentModal: (treatmentData = null, prefilledPetId = null, prefilledApptId = null) => {
+            app.ui.closeAllModals();
+            const modal = document.getElementById('treatment-modal');
+            const title = document.getElementById('treatment-modal-title');
+            const petSelect = document.getElementById('treatment-pet');
+
+            // Populate pets select
+            const pets = app.db.get('pets') || [];
+            petSelect.innerHTML = '<option value="" disabled selected>Select Pet / Patient...</option>';
+            pets.sort((a, b) => a.name.localeCompare(b.name)).forEach(pet => {
+                petSelect.innerHTML += `<option value="${pet.id}">${pet.name} (${pet.species})</option>`;
+            });
+
+            if (treatmentData) {
+                title.textContent = 'Edit Treatment Record';
+                document.getElementById('treatment-id').value = treatmentData.id;
+                document.getElementById('treatment-appt-id').value = treatmentData.appointmentId || '';
+                document.getElementById('treatment-pet').value = treatmentData.petId;
+                document.getElementById('treatment-date').value = treatmentData.dateTime;
+                document.getElementById('treatment-symptoms').value = treatmentData.symptoms;
+                document.getElementById('treatment-diagnosis').value = treatmentData.diagnosis;
+                document.getElementById('treatment-meds').value = treatmentData.medications || '';
+                document.getElementById('treatment-vaccine').value = treatmentData.vaccineGiven || '';
+                document.getElementById('treatment-cost').value = treatmentData.cost;
+                document.getElementById('treatment-notes').value = treatmentData.notes || '';
+            } else {
+                title.textContent = 'Record Clinic Visit & Treatments';
+                
+                // Prefills
+                if (prefilledPetId) {
+                    petSelect.value = prefilledPetId;
+                }
+                if (prefilledApptId) {
+                    document.getElementById('treatment-appt-id').value = prefilledApptId;
+                }
+                
+                // Prefill current date & time
+                const now = new Date();
+                const tzOffset = now.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, 16);
+                document.getElementById('treatment-date').value = localISOTime;
+            }
+
+            modal.classList.add('active');
         },
 
         openOwnerModal: (ownerData = null) => {
