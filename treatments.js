@@ -90,7 +90,7 @@ app.treatments = {
     },
 
     // Save a clinical treatment visit
-    save: () => {
+    save: async () => {
         const id = document.getElementById('treatment-id').value;
         const apptId = document.getElementById('treatment-appt-id').value;
         const petId = document.getElementById('treatment-pet').value;
@@ -107,89 +107,44 @@ app.treatments = {
             return;
         }
 
-        let treatments = app.db.get('treatments') || [];
-
-        const treatmentRecord = {
-            id: id || 't-' + Date.now(),
+        const payload = {
+            id: id || undefined,
             appointmentId: apptId || undefined,
             petId,
             dateTime,
             symptoms,
             diagnosis,
-            medications,
+            medications: medications || undefined,
             vaccineGiven: vaccineGiven || undefined,
             cost,
-            notes
+            notes: notes || undefined
         };
 
-        if (id) {
-            // Edit existing
-            const index = treatments.findIndex(t => t.id === id);
-            if (index !== -1) {
-                // Keep original appointment link if any
-                treatmentRecord.appointmentId = treatments[index].appointmentId;
-                treatments[index] = treatmentRecord;
+        try {
+            await fetch(`${app.db.apiURL}/treatments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            // Reload DBMS State
+            await app.db.loadState();
+
+            app.ui.closeAllModals();
+
+            // Refresh views depending on where we are
+            if (app.router.activeView === 'pet-details') {
+                app.pets.showDetail(petId);
+            } else if (app.router.activeView === 'treatments') {
+                app.treatments.renderList();
+            } else if (app.router.activeView === 'dashboard') {
+                app.dashboard.render();
+            } else if (app.router.activeView === 'appointments') {
+                app.appointments.renderAgenda();
             }
-        } else {
-            // Add new
-            treatments.push(treatmentRecord);
-        }
-
-        app.db.set('treatments', treatments);
-
-        // Update/create invoice matching this treatment
-        let invoices = app.db.get('invoices') || [];
-        const invIndex = invoices.findIndex(inv => inv.treatmentId === treatmentRecord.id);
-
-        const baseConsultation = 50.00;
-        const medsCost = vaccineGiven ? 25.00 : (medications ? 15.00 : 0.00);
-        const subtotal = baseConsultation + medsCost + cost;
-        const tax = subtotal * 0.08;
-        const total = subtotal + tax;
-
-        const invoiceRecord = {
-            id: invIndex !== -1 ? invoices[invIndex].id : 'INV-' + (Math.floor(Math.random() * 9000) + 1000),
-            treatmentId: treatmentRecord.id,
-            petId: treatmentRecord.petId,
-            dateTime: treatmentRecord.dateTime,
-            consultationFee: baseConsultation,
-            treatmentCost: cost,
-            medicineCost: medsCost,
-            tax: tax,
-            total: total,
-            status: invIndex !== -1 ? invoices[invIndex].status : 'Pending',
-            paymentMethod: invIndex !== -1 ? invoices[invIndex].paymentMethod : 'Pending',
-            reason: treatmentRecord.diagnosis
-        };
-
-        if (invIndex !== -1) {
-            invoices[invIndex] = invoiceRecord;
-        } else {
-            invoices.push(invoiceRecord);
-        }
-        app.db.set('invoices', invoices);
-
-        // Automation vaccine linkage: If vaccine is selected, update pet's profile vaccination status
-        if (vaccineGiven) {
-            let pets = app.db.get('pets') || [];
-            const petIndex = pets.findIndex(p => p.id === petId);
-            if (petIndex !== -1) {
-                pets[petIndex].vaccination = 'Up-to-date';
-                app.db.set('pets', pets);
-            }
-        }
-
-        app.ui.closeAllModals();
-
-        // Refresh views depending on where we are
-        if (app.router.activeView === 'pet-details') {
-            app.pets.showDetail(petId);
-        } else if (app.router.activeView === 'treatments') {
-            app.treatments.renderList();
-        } else if (app.router.activeView === 'dashboard') {
-            app.dashboard.render();
-        } else if (app.router.activeView === 'appointments') {
-            app.appointments.renderAgenda();
+        } catch (err) {
+            console.error('Error saving clinical treatment:', err);
+            alert('Could not save treatment record.');
         }
     }
 };

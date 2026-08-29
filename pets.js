@@ -256,7 +256,7 @@ app.pets = {
     },
 
     // Save a new or edited pet
-    save: () => {
+    save: async () => {
         const id = document.getElementById('pet-id').value;
         const name = document.getElementById('pet-name').value.trim();
         const ownerId = document.getElementById('pet-owner').value;
@@ -272,50 +272,43 @@ app.pets = {
             return;
         }
 
-        let pets = app.db.get('pets') || [];
+        const payload = {
+            id: id || undefined,
+            ownerId,
+            name,
+            species,
+            breed,
+            dob,
+            weight,
+            vaccination,
+            notes
+        };
 
-        if (id) {
-            // Edit existing pet
-            const index = pets.findIndex(p => p.id === id);
-            if (index !== -1) {
-                pets[index] = {
-                    ...pets[index],
-                    name,
-                    ownerId,
-                    species,
-                    breed,
-                    dob,
-                    weight,
-                    vaccination,
-                    notes
-                };
+        try {
+            const res = await fetch(`${app.db.apiURL}/pets`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            // Reload DBMS State
+            await app.db.loadState();
+            
+            app.ui.closeAllModals();
+
+            // Refresh views
+            const activeId = id || data.id;
+            if (app.router.activeView === 'pet-details') {
+                app.pets.showDetail(activeId);
+            } else if (app.router.activeView === 'owner-details') {
+                app.owners.showDetail(ownerId);
+            } else {
+                app.pets.renderList();
             }
-        } else {
-            // Create new pet
-            const newPet = {
-                id: 'p-' + Date.now(),
-                ownerId,
-                name,
-                species,
-                breed,
-                dob,
-                weight,
-                vaccination,
-                notes
-            };
-            pets.push(newPet);
-        }
-
-        app.db.set('pets', pets);
-        app.ui.closeAllModals();
-
-        // Refresh views
-        if (app.router.activeView === 'pet-details') {
-            app.pets.showDetail(id);
-        } else if (app.router.activeView === 'owner-details') {
-            app.owners.showDetail(ownerId);
-        } else {
-            app.pets.renderList();
+        } catch (err) {
+            console.error('Error saving pet to SQLite:', err);
+            alert('Could not save pet details.');
         }
     }
 };

@@ -8,58 +8,47 @@ window.app = window.app || {};
 Object.assign(window.app, {
     // Database Storage wrapper
     db: {
-        get: (key) => JSON.parse(localStorage.getItem(`veticare_${key}`)),
-        set: (key, data) => localStorage.setItem(`veticare_${key}`, JSON.stringify(data)),
-        init: () => {
-            // Seed default data if not present
-            if (!localStorage.getItem('veticare_owners')) {
-                const defaultOwners = [
-                    { id: 'o-1', name: 'John Doe', phone: '(555) 123-4567', email: 'john.doe@example.com', address: '742 Evergreen Terrace, Springfield', emergencyContact: 'Jane Doe - (555) 123-4568', createdAt: '2025-01-10T10:00:00.000Z' },
-                    { id: 'o-2', name: 'Alice Smith', phone: '(555) 987-6543', email: 'alice.smith@example.com', address: '123 Maple St, Oakville', emergencyContact: 'Bob Smith - (555) 987-6544', createdAt: '2025-03-14T14:30:00.000Z' },
-                    { id: 'o-3', name: 'David Miller', phone: '(555) 456-7890', email: 'david.miller@example.com', address: '456 Pine Rd, Pineville', emergencyContact: 'Sarah Miller - (555) 456-7891', createdAt: '2025-06-20T09:15:00.000Z' },
-                    { id: 'o-4', name: 'Emily Watson', phone: '(555) 321-7654', email: 'emily.w@example.com', address: '789 Birch Ave, Riverdale', emergencyContact: 'Arthur Watson - (555) 321-7650', createdAt: '2025-11-05T16:00:00.000Z' }
-                ];
-                app.db.set('owners', defaultOwners);
-            }
+        // Base API URL
+        apiURL: 'http://localhost:3000/api',
 
-            if (!localStorage.getItem('veticare_pets')) {
-                const defaultPets = [
-                    { id: 'p-1', ownerId: 'o-1', name: 'Buddy', species: 'Dog', breed: 'Golden Retriever', dob: '2021-04-12', weight: 32.4, vaccination: 'Up-to-date', notes: 'Friendly, loves tennis balls. Allergic to penicillin.' },
-                    { id: 'p-2', ownerId: 'o-2', name: 'Luna', species: 'Cat', breed: 'Siamese', dob: '2023-01-18', weight: 4.2, vaccination: 'Up-to-date', notes: 'Quiet, easily startled. Indoor cat.' },
-                    { id: 'p-3', ownerId: 'o-2', name: 'Max', species: 'Dog', breed: 'French Bulldog', dob: '2022-09-05', weight: 12.1, vaccination: 'Partially Vaccinated', notes: 'Mild skin allergies. Needs special hypoallergenic diet.' },
-                    { id: 'p-4', ownerId: 'o-3', name: 'Coco', species: 'Bird', breed: 'Cockatiel', dob: '2024-03-01', weight: 0.1, vaccination: 'Not Vaccinated', notes: 'Loves mimicking whistles. Prefers sunflower seeds.' },
-                    { id: 'p-5', ownerId: 'o-4', name: 'Rocky', species: 'Dog', breed: 'German Shepherd', dob: '2020-11-20', weight: 38.0, vaccination: 'Up-to-date', notes: 'Loyal guard dog, highly trained. Calm around other pets.' }
-                ];
-                app.db.set('pets', defaultPets);
-            }
+        // Memory cache representing DBMS state
+        state: {
+            owners: [],
+            pets: [],
+            appointments: [],
+            treatments: [],
+            invoices: []
+        },
 
-            if (!localStorage.getItem('veticare_appointments')) {
-                // Generate appointments (some today for dashboard demo)
-                const today = new Date().toISOString().split('T')[0];
-                const defaultAppointments = [
-                    { id: 'a-1', petId: 'p-1', vetName: 'Dr. S. Jenkins', dateTime: `${today}T09:30`, reason: 'Annual Checkup & Vaccines', status: 'Completed' },
-                    { id: 'a-2', petId: 'p-2', vetName: 'Dr. S. Jenkins', dateTime: `${today}T11:00`, reason: 'Ear Infection Examination', status: 'Scheduled' },
-                    { id: 'a-3', petId: 'p-3', vetName: 'Dr. S. Jenkins', dateTime: `${today}T14:30`, reason: 'Skin Allergy Follow-up', status: 'Scheduled' },
-                    { id: 'a-4', petId: 'p-5', vetName: 'Dr. S. Jenkins', dateTime: '2026-08-02T10:00', reason: 'Routine Checkup & Rabies Shot', status: 'Scheduled' }
-                ];
-                app.db.set('appointments', defaultAppointments);
-            }
+        // Helper wrapper to fetch table data from the backend
+        loadState: async () => {
+            try {
+                const [owners, pets, appointments, treatments, invoices] = await Promise.all([
+                    fetch(`${app.db.apiURL}/owners`).then(r => r.json()),
+                    fetch(`${app.db.apiURL}/pets`).then(r => r.json()),
+                    fetch(`${app.db.apiURL}/appointments`).then(r => r.json()),
+                    fetch(`${app.db.apiURL}/treatments`).then(r => r.json()),
+                    fetch(`${app.db.apiURL}/invoices`).then(r => r.json())
+                ]);
 
-            if (!localStorage.getItem('veticare_treatments')) {
-                const defaultTreatments = [
-                    { id: 't-1', petId: 'p-1', dateTime: '2025-11-12T10:15', symptoms: 'Lethargy and mild vomiting', diagnosis: 'Minor Food Poisoning (Ingested spoiled grass)', medications: 'Anti-emetic syrup, light diet for 48 hours', cost: 120.00, notes: 'Fully recovered. Owner advised to keep dog away from compost bin.' },
-                    { id: 't-2', petId: 'p-3', dateTime: '2026-06-15T15:00', symptoms: 'Severe itching skin and red paws', diagnosis: 'Seasonal Atopic Dermatitis', medications: 'Apoquel 5mg daily, medicated shampoo bath twice weekly', cost: 85.00, notes: 'Follow-up appointment scheduled for checkup.' }
-                ];
-                app.db.set('treatments', defaultTreatments);
+                app.db.state = { owners, pets, appointments, treatments, invoices };
+            } catch (err) {
+                console.error('Error fetching state from DBMS backend:', err);
             }
+        },
 
-            if (!localStorage.getItem('veticare_invoices')) {
-                const defaultInvoices = [
-                    { id: 'INV-1001', treatmentId: 't-1', petId: 'p-1', dateTime: '2025-11-12T10:15', consultationFee: 50.00, treatmentCost: 120.00, medicineCost: 15.00, tax: 14.80, total: 199.80, status: 'Paid', paymentMethod: 'Card', reason: 'Minor Food Poisoning (Ingested spoiled grass)' },
-                    { id: 'INV-1002', treatmentId: 't-2', petId: 'p-3', dateTime: '2026-06-15T15:00', consultationFee: 50.00, treatmentCost: 85.00, medicineCost: 25.00, tax: 12.80, total: 172.80, status: 'Pending', paymentMethod: 'Pending', reason: 'Seasonal Atopic Dermatitis' }
-                ];
-                app.db.set('invoices', defaultInvoices);
-            }
+        // Syncs with cached data synchronously to avoid breaking existing renderer logic
+        get: (key) => {
+            return app.db.state[key] || [];
+        },
+
+        // For backward compatibility and local states like theme
+        getLocal: (key) => JSON.parse(localStorage.getItem(`veticare_${key}`)),
+        setLocal: (key, data) => localStorage.setItem(`veticare_${key}`, JSON.stringify(data)),
+        
+        init: async () => {
+            // Seeding is handled backend-side in server.js now!
+            await app.db.loadState();
         }
     },
 
@@ -68,8 +57,11 @@ Object.assign(window.app, {
         activeView: 'dashboard',
         
         init: () => {
-            window.addEventListener('hashchange', () => {
+            window.addEventListener('hashchange', async () => {
                 const hash = window.location.hash.slice(1) || 'dashboard';
+                // Reload state from backend
+                await app.db.loadState();
+
                 // Handle sub-pages (e.g. owner-details, pet-details)
                 if (hash.startsWith('owner-details/')) {
                     const id = hash.split('/')[1];
@@ -84,17 +76,23 @@ Object.assign(window.app, {
 
             // Trigger initial load
             const initialHash = window.location.hash.slice(1) || 'dashboard';
-            if (initialHash.startsWith('owner-details/')) {
-                app.owners.showDetail(initialHash.split('/')[1]);
-            } else if (initialHash.startsWith('pet-details/')) {
-                app.pets.showDetail(initialHash.split('/')[1]);
-            } else {
-                app.router.navigate(initialHash, false);
-            }
+            (async () => {
+                await app.db.loadState();
+                if (initialHash.startsWith('owner-details/')) {
+                    app.owners.showDetail(initialHash.split('/')[1]);
+                } else if (initialHash.startsWith('pet-details/')) {
+                    app.pets.showDetail(initialHash.split('/')[1]);
+                } else {
+                    app.router.navigate(initialHash, false);
+                }
+            })();
         },
 
-        navigate: (viewName, updateHash = true) => {
+        navigate: async (viewName, updateHash = true) => {
             app.router.activeView = viewName;
+
+            // Load fresh data before render
+            await app.db.loadState();
             
             // Toggle active class on sidebar navigation links
             document.querySelectorAll('.nav-item').forEach(link => {
@@ -594,8 +592,8 @@ Object.assign(window.app, {
     },
 
     // Initialization hook
-    init: () => {
-        app.db.init();
+    init: async () => {
+        await app.db.init();
         app.ui.init();
         app.router.init();
     }

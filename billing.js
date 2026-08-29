@@ -88,13 +88,14 @@ app.billing = {
     },
 
     // Record invoice payment
-    pay: (invoiceId) => {
-        let invoices = app.db.get('invoices') || [];
-        const index = invoices.findIndex(inv => inv.id === invoiceId);
-        if (index !== -1) {
-            invoices[index].status = 'Paid';
-            invoices[index].paymentMethod = 'Card';
-            app.db.set('invoices', invoices);
+    pay: async (invoiceId) => {
+        try {
+            await fetch(`${app.db.apiURL}/invoices/${invoiceId}/pay`, {
+                method: 'PUT'
+            });
+
+            // Reload DBMS State
+            await app.db.loadState();
 
             app.ui.closeAllModals();
 
@@ -106,6 +107,9 @@ app.billing = {
             } else if (app.router.activeView === 'dashboard') {
                 app.dashboard.render();
             }
+        } catch (err) {
+            console.error('Error recording invoice payment:', err);
+            alert('Could not record payment.');
         }
     }
 };

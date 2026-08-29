@@ -155,7 +155,7 @@ app.owners = {
     },
 
     // Save a new or edited owner
-    save: () => {
+    save: async () => {
         const id = document.getElementById('owner-id').value;
         const name = document.getElementById('owner-name').value.trim();
         const phone = document.getElementById('owner-phone').value.trim();
@@ -168,43 +168,38 @@ app.owners = {
             return;
         }
 
-        let owners = app.db.get('owners') || [];
+        const payload = {
+            id: id || undefined,
+            name,
+            phone,
+            email,
+            address,
+            emergencyContact
+        };
 
-        if (id) {
-            // Edit existing owner
-            const index = owners.findIndex(o => o.id === id);
-            if (index !== -1) {
-                owners[index] = {
-                    ...owners[index],
-                    name,
-                    phone,
-                    email,
-                    address,
-                    emergencyContact
-                };
+        try {
+            const res = await fetch(`${app.db.apiURL}/owners`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            // Reload DBMS State
+            await app.db.loadState();
+            
+            app.ui.closeAllModals();
+
+            // Refresh view
+            const activeId = id || data.id;
+            if (app.router.activeView === 'owner-details') {
+                app.owners.showDetail(activeId);
+            } else {
+                app.owners.renderList();
             }
-        } else {
-            // Create new owner
-            const newOwner = {
-                id: 'o-' + Date.now(),
-                name,
-                phone,
-                email,
-                address,
-                emergencyContact,
-                createdAt: new Date().toISOString()
-            };
-            owners.push(newOwner);
-        }
-
-        app.db.set('owners', owners);
-        app.ui.closeAllModals();
-
-        // Refresh view
-        if (app.router.activeView === 'owner-details') {
-            app.owners.showDetail(id);
-        } else {
-            app.owners.renderList();
+        } catch (err) {
+            console.error('Error saving owner to SQLite:', err);
+            alert('Could not save owner details.');
         }
     }
 };

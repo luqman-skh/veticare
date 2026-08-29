@@ -249,7 +249,7 @@ app.appointments = {
     },
 
     // Save scheduled appointment slot
-    save: () => {
+    save: async () => {
         const id = document.getElementById('appointment-id').value;
         const petId = document.getElementById('appt-pet').value;
         const vetName = document.getElementById('appt-vet').value;
@@ -269,50 +269,58 @@ app.appointments = {
             return;
         }
 
-        let appointments = app.db.get('appointments') || [];
         const targetDateTime = `${date}T${time}`;
 
+        const payload = {
+            id: id || undefined,
+            petId,
+            vetName,
+            dateTime: targetDateTime,
+            reason,
+            status: id ? undefined : 'Scheduled' // backend updates existing status or sets to Scheduled if new
+        };
+
         if (id) {
-            // Edit existing
-            const index = appointments.findIndex(a => a.id === id);
-            if (index !== -1) {
-                appointments[index] = {
-                    ...appointments[index],
-                    petId,
-                    vetName,
-                    dateTime: targetDateTime,
-                    reason
-                };
+            // Keep status if editing
+            const existing = (app.db.get('appointments') || []).find(a => a.id === id);
+            if (existing) {
+                payload.status = existing.status;
             }
-        } else {
-            // Create new
-            const newAppt = {
-                id: 'a-' + Date.now(),
-                petId,
-                vetName,
-                dateTime: targetDateTime,
-                reason,
-                status: 'Scheduled'
-            };
-            appointments.push(newAppt);
         }
 
-        app.db.set('appointments', appointments);
-        app.ui.closeAllModals();
+        try {
+            await fetch(`${app.db.apiURL}/appointments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-        // Refresh views
-        app.appointments.renderCalendar();
-        app.appointments.renderAgenda();
+            // Reload state from SQLite
+            await app.db.loadState();
+
+            app.ui.closeAllModals();
+
+            // Refresh views
+            app.appointments.renderCalendar();
+            app.appointments.renderAgenda();
+        } catch (err) {
+            console.error('Error saving appointment:', err);
+            alert('Could not book appointment.');
+        }
     },
 
-    // Change status (e.g. Cancel)
-    changeStatus: (apptId, newStatus) => {
-        let appointments = app.db.get('appointments') || [];
-        const index = appointments.findIndex(a => a.id === apptId);
-        
-        if (index !== -1) {
-            appointments[index].status = newStatus;
-            app.db.set('appointments', appointments);
+    // Change status (e.g. Cancel / Complete)
+    changeStatus: async (apptId, newStatus) => {
+        try {
+            const endpoint = newStatus === 'Cancelled' ? 'cancel' : 'complete';
+            await fetch(`${app.db.apiURL}/appointments/${apptId}/${endpoint}`, {
+                method: 'PUT'
+            });
+
+            // Reload state
+            await app.db.loadState();
+        } catch (err) {
+            console.error('Error updating appointment status:', err);
         }
 
         // Re-render
@@ -321,8 +329,8 @@ app.appointments = {
     },
 
     // Complete appointment - marks Completed and opens Treatment Modal
-    completeAppointment: (apptId, petId) => {
-        app.appointments.changeStatus(apptId, 'Completed');
+    completeAppointment: async (apptId, petId) => {
+        await app.appointments.changeStatus(apptId, 'Completed');
         
         // Automatically launch Record Visit modal, passing pet ID and appointment reference
         app.ui.openTreatmentModal(null, petId, apptId);
