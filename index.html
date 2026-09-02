@@ -1,876 +1,250 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VetiCare - Veterinary Clinic & Patient Management</title>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- FontAwesome/Lucide style SVGs inside application, no external CSS library except fonts -->
+    <title>VetiCare - Veterinary Clinic Management System</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
+    <div class="app-layout">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="logo-icon">
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        <path d="M19 12H5M12 5v14"/>
-                    </svg>
-                    <span class="logo-text">VetiCare</span>
-                </div>
+            <div class="brand">
+                <div class="logo-icon">🐾</div>
+                <h2>VetiCare</h2>
             </div>
-            
-            <nav class="sidebar-nav">
-                <a href="#dashboard" class="nav-item active" data-view="dashboard">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#owners" class="nav-item" data-view="owners">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    <span>Owners</span>
-                </a>
-                <a href="#pets" class="nav-item" data-view="pets">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5c-1.66 0-3 1.34-3 3 0 2.5 3 6 3 6s3-3.5 3-6c0-1.66-1.34-3-3-3zm0 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M19 9c-1.66 0-3 1.34-3 3 0 2.5 3 6 3 6s3-3.5 3-6c0-1.66-1.34-3-3-3zm0 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M5 9c-1.66 0-3 1.34-3 3 0 2.5 3 6 3 6s3-3.5 3-6c0-1.66-1.34-3-3-3zm0 4.5c-.83 0-1.5-.67-1.5-1.5S4.17 12 5 12s1.5.67 1.5 1.5S5.83 13.5 5 13.5z"/></svg>
-                    <span>Pets & Patients</span>
-                </a>
-                <a href="#appointments" class="nav-item" data-view="appointments">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    <span>Appointments</span>
-                </a>
-                <a href="#treatments" class="nav-item" data-view="treatments">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><rect x="2" y="9" width="20" height="6" rx="2"/></svg>
-                    <span>Treatments</span>
-                </a>
-                <a href="#billing" class="nav-item" data-view="billing">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    <span>Billing & Invoices</span>
-                </a>
-                <a href="#reports" class="nav-item" data-view="reports">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-                    <span>Insights & Reports</span>
-                </a>
+            <nav class="nav-menu">
+                <a href="#dashboard" class="nav-item active" data-view="dashboard">📊 Dashboard</a>
+                <a href="#owners" class="nav-item" data-view="owners">👥 Owners</a>
+                <a href="#pets" class="nav-item" data-view="pets">🐶 Patients & Pets</a>
+                <a href="#appointments" class="nav-item" data-view="appointments">📅 Appointments</a>
+                <a href="#treatments" class="nav-item" data-view="treatments">🩺 Treatments</a>
+                <a href="#billing" class="nav-item" data-view="billing">💳 Billing & Invoices</a>
             </nav>
-            
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-avatar">SJ</div>
-                    <div class="user-info">
-                        <span class="user-name">Dr. S. Jenkins</span>
-                        <span class="user-role">Lead Vet</span>
-                    </div>
-                </div>
+            <div class="theme-toggle">
+                <button id="theme-btn" class="secondary-btn btn-sm">🌙 Switch Theme</button>
             </div>
         </aside>
 
         <!-- Main Content Area -->
         <main class="main-content">
-            <!-- Top Bar / Header -->
-            <header class="main-header">
-                <div class="header-search">
-                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" id="global-search" placeholder="Search patients, owners, or appointments...">
+            <header class="top-bar">
+                <div class="global-search">
+                    <input type="text" id="global-search-input" placeholder="Search pets, owners, appointments...">
                 </div>
-                <div class="header-actions">
-                    <button class="theme-toggle-btn" id="theme-toggle" title="Toggle Light/Dark Theme">
-                        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                    </button>
-                    <button class="primary-btn" id="header-action-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        <span id="header-action-text">Add Owner</span>
-                    </button>
-                </div>
+                <button id="header-action-btn" class="primary-btn" style="display:none;">
+                    <span id="header-action-text">+ New Record</span>
+                </button>
             </header>
 
-            <!-- View Containers -->
             <div class="view-viewport">
                 <!-- Dashboard View -->
                 <section id="view-dashboard" class="view-panel active">
-                    <div class="welcome-banner">
-                        <div class="banner-content">
-                            <h1>Welcome back, Dr. Jenkins</h1>
-                            <p>Here is what's happening at VetiCare today. You have <span class="highlight" id="today-apt-count">0</span> appointments scheduled.</p>
-                        </div>
-                        <div class="banner-illustration">
-                            <!-- Custom SVG Medical Illustration -->
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" class="banner-svg">
-                                <circle cx="60" cy="60" r="30" fill="var(--color-primary-light)" opacity="0.2"/>
-                                <circle cx="140" cy="60" r="40" fill="var(--color-secondary-light)" opacity="0.15"/>
-                                <path d="M40 80 Q 60 40, 80 80 T 120 80" fill="none" stroke="var(--color-primary)" stroke-width="3" stroke-linecap="round"/>
-                                <rect x="95" y="45" width="10" height="30" rx="2" fill="var(--color-accent)" opacity="0.8"/>
-                                <rect x="85" y="55" width="30" height="10" rx="2" fill="var(--color-accent)" opacity="0.8"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Metrics Stats Grid -->
                     <div class="metrics-grid">
                         <div class="metric-card">
-                            <div class="metric-icon bg-primary-soft">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-label">Total Owners</span>
-                                <h3 class="metric-value" id="stat-owners">0</h3>
-                            </div>
+                            <h3>Total Patients</h3>
+                            <p id="stat-pets-count" class="metric-num">0</p>
                         </div>
                         <div class="metric-card">
-                            <div class="metric-icon bg-secondary-soft">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" stroke-width="2"><path d="M12 5c-1.66 0-3 1.34-3 3 0 2.5 3 6 3 6s3-3.5 3-6c0-1.66-1.34-3-3-3z"/></svg>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-label">Registered Pets</span>
-                                <h3 class="metric-value" id="stat-pets">0</h3>
-                            </div>
+                            <h3>Registered Owners</h3>
+                            <p id="stat-owners-count" class="metric-num">0</p>
                         </div>
                         <div class="metric-card">
-                            <div class="metric-icon bg-accent-soft">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-label">Appointments Today</span>
-                                <h3 class="metric-value" id="stat-appointments">0</h3>
-                            </div>
+                            <h3>Today's Visits</h3>
+                            <p id="stat-today-count" class="metric-num">0</p>
                         </div>
                         <div class="metric-card">
-                            <div class="metric-icon bg-success-soft">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-label">Today's Revenue</span>
-                                <h3 class="metric-value" id="stat-revenue">$0.00</h3>
-                            </div>
+                            <h3>Revenue Total</h3>
+                            <p id="stat-revenue" class="metric-num">$0.00</p>
                         </div>
                     </div>
-
-                    <!-- Dashboard Layout Details -->
-                    <div class="dashboard-details-grid">
-                        <!-- Left: Upcoming Appointments -->
-                        <div class="panel-card col-span-2">
-                            <div class="panel-card-header">
-                                <h3>Today's Schedule</h3>
-                                <button class="text-btn" onclick="app.router.navigate('appointments')">View All</button>
-                            </div>
-                            <div class="panel-card-body">
-                                <div class="schedule-list" id="dashboard-schedule">
-                                    <!-- Rendered dynamically -->
-                                    <div class="empty-state">No appointments scheduled for today.</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Right: Quick Diagnostics Stats -->
-                        <div class="panel-card">
-                            <div class="panel-card-header">
-                                <h3>Species Breakdown</h3>
-                            </div>
-                            <div class="panel-card-body">
-                                <div class="chart-container-donut">
-                                    <div class="donut-chart" id="species-breakdown-chart">
-                                        <!-- Rendered dynamically via SVG -->
-                                    </div>
-                                    <div class="chart-legends" id="species-legends">
-                                        <!-- Legends -->
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="dashboard-sections">
+                        <div class="panel-box">
+                            <h4>Recent Clinical Activity</h4>
+                            <div id="recent-visits-list" class="activity-list"></div>
                         </div>
                     </div>
                 </section>
 
                 <!-- Owners View -->
                 <section id="view-owners" class="view-panel">
-                    <div class="panel-header-actions">
-                        <div class="filter-group">
-                            <label for="owner-sort">Sort By:</label>
-                            <select id="owner-sort" class="select-input">
-                                <option value="name-asc">Name (A-Z)</option>
-                                <option value="name-desc">Name (Z-A)</option>
-                                <option value="pets-desc">Most Pets First</option>
-                                <option value="recent">Recently Added</option>
-                            </select>
-                        </div>
+                    <div class="panel-header">
+                        <h2>Client & Owner Registry</h2>
+                        <input type="text" id="owner-search" placeholder="Filter by owner name, phone, email...">
                     </div>
-                    
-                    <div class="owners-list-wrapper">
-                        <!-- Dynamic grid of owners -->
-                        <div class="owners-grid" id="owners-grid">
-                            <!-- Populated by owners.js -->
-                        </div>
-                    </div>
+                    <div id="owners-grid" class="cards-grid"></div>
                 </section>
 
-                <!-- Owner Profile Detail View (Dynamic Slide-Over or Sub-Panel) -->
+                <!-- Owner Detail View -->
                 <section id="view-owner-details" class="view-panel">
-                    <div class="detail-header">
-                        <button class="back-btn" id="owner-detail-back">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                            Back to Owners
-                        </button>
-                        <div class="action-buttons">
-                            <button class="secondary-btn btn-sm" id="btn-edit-owner">Edit Profile</button>
-                            <button class="primary-btn btn-sm" id="btn-add-pet-to-owner">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                Add Pet
-                            </button>
-                        </div>
-                    </div>
-                    <div class="detail-grid">
-                        <!-- Owner Info Profile Card -->
-                        <div class="detail-card profile-summary-card">
-                            <div class="profile-avatar" id="od-avatar">??</div>
-                            <h2 class="profile-name" id="od-name">Owner Name</h2>
-                            <div class="profile-info-list">
-                                <div class="profile-info-item">
-                                    <span class="info-label">Phone</span>
-                                    <span class="info-value" id="od-phone">N/A</span>
-                                </div>
-                                <div class="profile-info-item">
-                                    <span class="info-label">Email</span>
-                                    <span class="info-value" id="od-email">N/A</span>
-                                </div>
-                                <div class="profile-info-item">
-                                    <span class="info-label">Address</span>
-                                    <span class="info-value" id="od-address">N/A</span>
-                                </div>
-                                <div class="profile-info-item">
-                                    <span class="info-label">Emergency Contact</span>
-                                    <span class="info-value" id="od-emergency">N/A</span>
-                                </div>
-                                <div class="profile-info-item">
-                                    <span class="info-label">Registered Since</span>
-                                    <span class="info-value" id="od-date">N/A</span>
-                                </div>
+                    <button class="secondary-btn btn-sm" onclick="window.location.hash='owners'">&larr; Back to Owners</button>
+                    <div class="profile-card">
+                        <div class="profile-header">
+                            <div id="od-avatar" class="avatar-circle"></div>
+                            <div>
+                                <h2 id="od-name"></h2>
+                                <p id="od-contact"></p>
                             </div>
                         </div>
-
-                        <!-- Owner's Pets & Recent Activity -->
-                        <div class="detail-card col-span-2">
-                            <h3>Registered Pets</h3>
-                            <div class="owner-pets-list" id="od-pets-list">
-                                <!-- Pets listed here -->
-                            </div>
-                        </div>
+                        <h3>Registered Pets</h3>
+                        <div id="od-pets-list" class="cards-grid"></div>
+                        <button id="btn-add-pet-to-owner" class="primary-btn btn-sm" style="margin-top:15px;">+ Add Patient Profile</button>
                     </div>
                 </section>
 
                 <!-- Pets View -->
                 <section id="view-pets" class="view-panel">
-                    <div class="panel-header-actions">
-                        <div class="filter-group">
-                            <button class="filter-pill active" data-species="all">All Species</button>
-                            <button class="filter-pill" data-species="Dog">Dogs</button>
-                            <button class="filter-pill" data-species="Cat">Cats</button>
-                            <button class="filter-pill" data-species="Bird">Birds</button>
-                            <button class="filter-pill" data-species="Other">Others</button>
-                        </div>
-                        <div class="filter-group">
-                            <select id="pet-sort" class="select-input">
-                                <option value="name-asc">Name (A-Z)</option>
-                                <option value="age-desc">Age (Oldest)</option>
-                                <option value="age-asc">Age (Youngest)</option>
-                                <option value="weight-desc">Weight (Heaviest)</option>
-                            </select>
-                        </div>
+                    <div class="panel-header">
+                        <h2>Pet Patient Directory</h2>
+                        <input type="text" id="pet-search" placeholder="Filter by pet name, breed, species...">
                     </div>
-                    
-                    <div class="pets-grid" id="pets-grid">
-                        <!-- Populated by pets.js -->
-                    </div>
+                    <div id="pets-grid" class="cards-grid"></div>
                 </section>
 
-                <!-- Pet Profile Detail View -->
+                <!-- Pet Detail View -->
                 <section id="view-pet-details" class="view-panel">
-                    <div class="detail-header">
-                        <button class="back-btn" id="pet-detail-back">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                            Back to Pets
-                        </button>
-                        <div class="action-buttons">
-                            <button class="secondary-btn btn-sm" id="btn-edit-pet">Edit Pet</button>
-                            <button class="accent-btn btn-sm" id="btn-add-appointment">Book Appointment</button>
-                            <button class="primary-btn btn-sm" id="btn-add-treatment">Record Visit</button>
-                        </div>
-                    </div>
-                    <div class="detail-grid">
-                        <!-- Pet Info Profile Card -->
-                        <div class="detail-card profile-summary-card">
-                            <div class="pet-photo-container">
-                                <div class="pet-detail-avatar" id="pd-avatar">🐾</div>
-                            </div>
-                            <h2 class="profile-name" id="pd-name">Pet Name</h2>
-                            <div class="pet-badge-row">
-                                <span class="badge" id="pd-species-breed">Dog / Golden Retriever</span>
-                            </div>
-                            
-                            <div class="profile-info-list mt-4">
-                                <div class="profile-info-item">
-                                    <span class="info-label">Age</span>
-                                    <span class="info-value" id="pd-age">N/A</span>
-                                </div>
-                                <div class="profile-info-item">
-                                    <span class="info-label">Weight</span>
-                                    <span class="info-value" id="pd-weight">N/A</span>
-                                </div>
-                                <div class="profile-info-item">
-                                    <span class="info-label">Owner</span>
-                                    <span class="info-value"><a href="#" class="owner-link-text" id="pd-owner">N/A</a></span>
-                                </div>
-                                <div class="profile-info-item">
-                                    <span class="info-label">Vaccination Status</span>
-                                    <span class="badge" id="pd-vaccination">Fully Vaccinated</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pet's Medical History -->
-                        <div class="detail-card col-span-2">
-                            <div class="tabs-header">
-                                <button class="tab-btn active" data-tab="medical-history">Medical Records</button>
-                                <button class="tab-btn" data-tab="vaccinations">Vaccinations</button>
-                            </div>
-                            <div class="tab-content active" id="tab-medical-history">
-                                <div class="treatment-history-list" id="pd-treatments">
-                                    <!-- List of treatments -->
-                                </div>
-                            </div>
-                            <div class="tab-content" id="tab-vaccinations">
-                                <div class="vaccination-history-list" id="pd-vaccinations">
-                                    <!-- List of vaccinations -->
-                                </div>
-                            </div>
+                    <button class="secondary-btn btn-sm" onclick="window.location.hash='pets'">&larr; Back to Pets</button>
+                    <div class="profile-card">
+                        <h2 id="pd-name"></h2>
+                        <p id="pd-meta"></p>
+                        <span id="pd-vaccine-badge" class="badge"></span>
+                        <div style="margin-top:20px;">
+                            <h3>Medical & Treatment History</h3>
+                            <div id="pd-treatments-list" class="activity-list"></div>
                         </div>
                     </div>
                 </section>
 
                 <!-- Appointments View -->
                 <section id="view-appointments" class="view-panel">
-                    <div class="scheduler-layout">
-                        <!-- Left Pane: Calendar Grid picker -->
-                        <div class="scheduler-calendar-pane panel-card">
-                            <div class="calendar-header">
-                                <button class="calendar-nav-btn" id="prev-month-btn">&larr;</button>
-                                <h3 id="calendar-month-year">August 2026</h3>
-                                <button class="calendar-nav-btn" id="next-month-btn">&rarr;</button>
-                            </div>
-                            <div class="calendar-weekdays">
-                                <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
-                            </div>
-                            <div class="calendar-grid" id="calendar-days">
-                                <!-- Days rendered dynamically -->
-                            </div>
-                            <div class="scheduler-vet-filters mt-4">
-                                <label for="scheduler-vet-select">Filter by Veterinarian:</label>
-                                <select id="scheduler-vet-select" class="select-input mt-2 w-full" style="width: 100%;">
-                                    <option value="all">All Veterinarians</option>
-                                    <option value="Dr. S. Jenkins">Dr. S. Jenkins</option>
-                                    <option value="Dr. A. Rivera">Dr. A. Rivera</option>
-                                    <option value="Dr. T. Chen">Dr. T. Chen</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Right Pane: Agenda List -->
-                        <div class="scheduler-agenda-pane panel-card col-span-2">
-                            <div class="panel-card-header">
-                                <div>
-                                    <h3 id="agenda-date-title">Selected Date Agenda</h3>
-                                    <p class="text-sm text-muted mt-2" id="agenda-date-subtitle">Agenda list</p>
-                                </div>
-                                <button class="primary-btn btn-sm" id="book-appt-btn">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                    Book Slot
-                                </button>
-                            </div>
-                            <div class="panel-card-body">
-                                <div class="agenda-timeline" id="agenda-list">
-                                    <!-- Populated dynamically by appointments.js -->
-                                </div>
-                            </div>
-                        </div>
+                    <div class="panel-header">
+                        <h2>Appointment Calendar & Agenda</h2>
+                        <button class="primary-btn" onclick="app.ui.openAppointmentModal()">+ Book Slot</button>
+                    </div>
+                    <div class="appointments-container">
+                        <div id="agenda-list" class="agenda-list"></div>
                     </div>
                 </section>
 
                 <!-- Treatments View -->
                 <section id="view-treatments" class="view-panel">
-                    <div class="panel-header-actions">
-                        <div class="filter-group" style="flex-grow: 1;">
-                            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                            <input type="text" id="treatment-search" class="select-input" style="border-radius: var(--border-radius-pill); padding-left: 44px; width: 320px;" placeholder="Search medical logs, diagnosis, drugs...">
-                        </div>
-                        <div class="filter-group">
-                            <button class="primary-btn btn-sm" id="btn-new-treatment">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                Record Visit
-                            </button>
-                        </div>
+                    <div class="panel-header">
+                        <h2>Clinical Visit Records</h2>
+                        <button class="primary-btn" onclick="app.ui.openTreatmentModal()">+ Record Visit</button>
                     </div>
-                    
-                    <div class="clinical-logs-wrapper">
-                        <div class="clinical-timeline" id="clinical-logs-list">
-                            <!-- Populated dynamically by treatments.js -->
-                        </div>
-                    </div>
+                    <div id="treatments-list" class="activity-list"></div>
                 </section>
 
                 <!-- Billing View -->
                 <section id="view-billing" class="view-panel">
-                    <div class="panel-header-actions">
-                        <div class="filter-group" style="flex-grow: 1;">
-                            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                            <input type="text" id="billing-search" class="select-input" style="border-radius: var(--border-radius-pill); padding-left: 44px; width: 320px;" placeholder="Search invoices by owner or pet...">
-                        </div>
-                        <div class="filter-group">
-                            <label for="billing-status-filter">Status:</label>
-                            <select id="billing-status-filter" class="select-input">
-                                <option value="all">All Invoices</option>
-                                <option value="Paid">Paid Only</option>
-                                <option value="Pending">Pending Only</option>
-                            </select>
-                        </div>
+                    <div class="panel-header">
+                        <h2>Billing & Financial Ledger</h2>
+                        <input type="text" id="billing-search" placeholder="Filter invoices...">
                     </div>
-                    
-                    <div class="panel-card">
-                        <div style="overflow-x: auto; width: 100%;">
-                            <table style="width: 100%; border-collapse: collapse; text-align: left;" class="clinic-table">
-                                <thead>
-                                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 13px; font-weight: 700;">
-                                        <th style="padding: 16px;">Invoice ID</th>
-                                        <th style="padding: 16px;">Date</th>
-                                        <th style="padding: 16px;">Patient</th>
-                                        <th style="padding: 16px;">Treatment / Reason</th>
-                                        <th style="padding: 16px;">Total Amount</th>
-                                        <th style="padding: 16px;">Status</th>
-                                        <th style="padding: 16px; text-align: right;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="invoices-list" style="font-size: 14px;">
-                                    <!-- Populated dynamically by billing.js -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Reports & Insights View -->
-                <section id="view-reports" class="view-panel">
-                    <!-- Reports Metric Top Row -->
-                    <div class="metrics-grid" style="margin-bottom: 24px;">
-                        <div class="metric-card">
-                            <div class="metric-icon bg-success-soft">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-label">Total Invoice Revenue</span>
-                                <h3 class="metric-value" id="rep-total-revenue">$0.00</h3>
-                            </div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-icon bg-primary-soft">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-label">Finished Consults</span>
-                                <h3 class="metric-value" id="rep-total-consults">0</h3>
-                            </div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-icon bg-accent-soft">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-label">Vaccine Compliance</span>
-                                <h3 class="metric-value" id="rep-vaccine-rate">0%</h3>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Dynamic SVG Visualizations Layout -->
-                    <div class="dashboard-details-grid" style="grid-template-columns: repeat(2, 1fr);">
-                        <!-- Revenue Area Chart -->
-                        <div class="panel-card">
-                            <div class="panel-card-header">
-                                <h3>Revenue Summary (Last 7 Days)</h3>
-                            </div>
-                            <div class="panel-card-body" style="height: 260px; display: flex; align-items: center; justify-content: center;" id="revenue-chart-container">
-                                <!-- Generated by reports.js -->
-                            </div>
-                        </div>
-
-                        <!-- Diagnosis Bar Chart -->
-                        <div class="panel-card">
-                            <div class="panel-card-header">
-                                <h3>Frequently Treated Diagnoses</h3>
-                            </div>
-                            <div class="panel-card-body" style="height: 260px; display: flex; align-items: center; justify-content: center;" id="diagnoses-chart-container">
-                                <!-- Generated by reports.js -->
-                            </div>
-                        </div>
-
-                        <!-- Upcoming Vaccine Tracker Table -->
-                        <div class="panel-card col-span-2">
-                            <div class="panel-card-header">
-                                <h3>Upcoming Vaccination Due Schedules</h3>
-                                <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Pets with non-vaccinated or partially-vaccinated profiles requiring booster scheduling</p>
-                            </div>
-                            <div class="panel-card-body">
-                                <div style="overflow-x: auto; width: 100%;">
-                                    <table style="width: 100%; border-collapse: collapse; text-align: left;" class="clinic-table">
-                                        <thead>
-                                            <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 12px; font-weight: 700;">
-                                                <th style="padding: 12px;">Pet Patient</th>
-                                                <th style="padding: 12px;">Species / Breed</th>
-                                                <th style="padding: 12px;">Owner Contact</th>
-                                                <th style="padding: 12px;">Current Status</th>
-                                                <th style="padding: 12px; text-align: right;">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="vaccine-schedules-list" style="font-size: 13px;">
-                                            <!-- Populated dynamically by reports.js -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice ID</th><th>Date</th><th>Pet / Owner</th><th>Reason</th><th>Total</th><th>Status</th><th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoices-table-body"></tbody>
+                    </table>
                 </section>
             </div>
         </main>
     </div>
 
     <!-- Modals -->
-    <!-- Add/Edit Owner Modal -->
-    <div class="modal-overlay" id="owner-modal">
+    <div id="owner-modal" class="modal-overlay">
         <div class="modal-card">
-            <div class="modal-header">
-                <h3 id="owner-modal-title">Register New Owner</h3>
-                <button class="modal-close" id="close-owner-modal">&times;</button>
-            </div>
-            <form id="owner-form">
+            <h3>Owner Registration</h3>
+            <form id="owner-form" onsubmit="event.preventDefault(); app.owners.save();">
                 <input type="hidden" id="owner-id">
-                <div class="form-grid">
-                    <div class="form-group col-span-2">
-                        <label for="owner-name" class="required">Full Name</label>
-                        <input type="text" id="owner-name" placeholder="John Doe" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="owner-phone" class="required">Phone Number</label>
-                        <input type="tel" id="owner-phone" placeholder="(555) 000-0000" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="owner-email" class="required">Email Address</label>
-                        <input type="email" id="owner-email" placeholder="john@example.com" required>
-                    </div>
-                    <div class="form-group col-span-2">
-                        <label for="owner-address">Residential Address</label>
-                        <input type="text" id="owner-address" placeholder="123 Main St, City">
-                    </div>
-                    <div class="form-group col-span-2">
-                        <label for="owner-emergency">Emergency Contact Name & Phone</label>
-                        <input type="text" id="owner-emergency" placeholder="Jane Doe - (555) 111-2222">
-                    </div>
-                </div>
+                <div class="form-group"><label>Full Name *</label><input type="text" id="owner-name" required></div>
+                <div class="form-group"><label>Phone *</label><input type="text" id="owner-phone" required></div>
+                <div class="form-group"><label>Email *</label><input type="email" id="owner-email" required></div>
+                <div class="form-group"><label>Address</label><input type="text" id="owner-address"></div>
+                <div class="form-group"><label>Emergency Contact</label><input type="text" id="owner-emergency"></div>
                 <div class="modal-actions">
-                    <button type="button" class="secondary-btn" id="cancel-owner-modal">Cancel</button>
+                    <button type="button" class="secondary-btn" onclick="app.ui.closeModals()">Cancel</button>
                     <button type="submit" class="primary-btn">Save Owner</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Add/Edit Pet Modal -->
-    <div class="modal-overlay" id="pet-modal">
+    <div id="pet-modal" class="modal-overlay">
         <div class="modal-card">
-            <div class="modal-header">
-                <h3 id="pet-modal-title">Add New Patient Profile</h3>
-                <button class="modal-close" id="close-pet-modal">&times;</button>
-            </div>
-            <form id="pet-form">
+            <h3>Patient Profile Registration</h3>
+            <form id="pet-form" onsubmit="event.preventDefault(); app.pets.save();">
                 <input type="hidden" id="pet-id">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="pet-name" class="required">Pet Name</label>
-                        <input type="text" id="pet-name" placeholder="Buddy" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="pet-owner" class="required">Owner Profile</label>
-                        <select id="pet-owner" required>
-                            <!-- Populated dynamically -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="pet-species" class="required">Species</label>
-                        <select id="pet-species" required>
-                            <option value="Dog">Dog</option>
-                            <option value="Cat">Cat</option>
-                            <option value="Bird">Bird</option>
-                            <option value="Rabbit">Rabbit</option>
-                            <option value="Reptile">Reptile</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="pet-breed" class="required">Breed</label>
-                        <input type="text" id="pet-breed" placeholder="Golden Retriever" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="pet-dob" class="required">Date of Birth</label>
-                        <input type="date" id="pet-dob" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="pet-weight" class="required">Weight (kg)</label>
-                        <input type="number" step="0.1" id="pet-weight" placeholder="15.5" required>
-                    </div>
-                    <div class="form-group col-span-2">
-                        <label for="pet-vaccination" class="required">Vaccination Status</label>
-                        <select id="pet-vaccination" required>
-                            <option value="Up-to-date">Up to Date</option>
-                            <option value="Partially Vaccinated">Partially Vaccinated</option>
-                            <option value="Not Vaccinated">Not Vaccinated</option>
-                            <option value="Unknown">Unknown / Pending Record</option>
-                        </select>
-                    </div>
-                    <div class="form-group col-span-2">
-                        <label for="pet-notes">Medical Notes / Allergies</label>
-                        <textarea id="pet-notes" rows="3" placeholder="Allergic to penicillin; very friendly but easily scared by loud noises."></textarea>
-                    </div>
-                </div>
+                <div class="form-group"><label>Owner *</label><select id="pet-owner" required></select></div>
+                <div class="form-group"><label>Pet Name *</label><input type="text" id="pet-name" required></div>
+                <div class="form-group"><label>Species *</label><select id="pet-species"><option>Dog</option><option>Cat</option><option>Bird</option><option>Other</option></select></div>
+                <div class="form-group"><label>Breed *</label><input type="text" id="pet-breed" required></div>
+                <div class="form-group"><label>Date of Birth *</label><input type="date" id="pet-dob" required></div>
+                <div class="form-group"><label>Weight (kg) *</label><input type="number" step="0.1" id="pet-weight" required></div>
+                <div class="form-group"><label>Vaccination Status</label><select id="pet-vaccination"><option>Not Vaccinated</option><option>Partially Vaccinated</option><option>Up-to-date</option></select></div>
+                <div class="form-group"><label>Medical Notes</label><textarea id="pet-notes"></textarea></div>
                 <div class="modal-actions">
-                    <button type="button" class="secondary-btn" id="cancel-pet-modal">Cancel</button>
+                    <button type="button" class="secondary-btn" onclick="app.ui.closeModals()">Cancel</button>
                     <button type="submit" class="primary-btn">Save Patient</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Book Appointment Modal -->
-    <div class="modal-overlay" id="appointment-modal">
+    <div id="appointment-modal" class="modal-overlay">
         <div class="modal-card">
-            <div class="modal-header">
-                <h3 id="appointment-modal-title">Book Consultation Slot</h3>
-                <button class="modal-close" id="close-appointment-modal">&times;</button>
-            </div>
-            <form id="appointment-form">
+            <h3>Schedule Appointment</h3>
+            <form id="appointment-form" onsubmit="event.preventDefault(); app.appointments.save();">
                 <input type="hidden" id="appointment-id">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="appt-pet" class="required">Select Pet / Patient</label>
-                        <select id="appt-pet" required>
-                            <!-- Populated dynamically -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="appt-vet" class="required">Select Veterinarian</label>
-                        <select id="appt-vet" required>
-                            <option value="Dr. S. Jenkins">Dr. S. Jenkins</option>
-                            <option value="Dr. A. Rivera">Dr. A. Rivera</option>
-                            <option value="Dr. T. Chen">Dr. T. Chen</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="appt-date" class="required">Appointment Date</label>
-                        <input type="date" id="appt-date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="appt-time" class="required">Preferred Time Slot</label>
-                        <select id="appt-time" required>
-                            <option value="09:00">09:00 AM</option>
-                            <option value="09:30">09:30 AM</option>
-                            <option value="10:00">10:00 AM</option>
-                            <option value="10:30">10:30 AM</option>
-                            <option value="11:00">11:00 AM</option>
-                            <option value="11:30">11:30 AM</option>
-                            <option value="12:00">12:00 PM</option>
-                            <option value="12:30">12:30 PM</option>
-                            <option value="13:00">01:00 PM</option>
-                            <option value="13:30">01:30 PM</option>
-                            <option value="14:00">02:00 PM</option>
-                            <option value="14:30">02:30 PM</option>
-                            <option value="15:00">03:00 PM</option>
-                            <option value="15:30">03:30 PM</option>
-                            <option value="16:00">04:00 PM</option>
-                            <option value="16:30">04:30 PM</option>
-                        </select>
-                    </div>
-                    <div class="form-group col-span-2">
-                        <label for="appt-reason" class="required">Consultation Reason</label>
-                        <select id="appt-reason" required>
-                            <option value="Wellness Exam">Wellness Exam</option>
-                            <option value="Sick Visit">Sick Visit</option>
-                            <option value="Vaccination">Vaccination</option>
-                            <option value="Dental Care">Dental Care</option>
-                            <option value="Surgical Consult">Surgical Consult</option>
-                            <option value="Emergency">Emergency</option>
-                        </select>
-                    </div>
-                </div>
-                <!-- Validation Collision Error Alert -->
-                <div class="alert alert-danger" id="appointment-collision-alert" style="display: none; margin-bottom: 20px; background-color: var(--color-danger-soft); color: var(--color-danger); border: 1px solid var(--color-danger); padding: 12px; border-radius: var(--border-radius-md); font-size: 13px;">
-                    <strong>Schedule Conflict Detected!</strong> The selected veterinarian is already booked within 30 minutes of this time slot.
-                </div>
+                <div class="form-group"><label>Patient Pet *</label><select id="appt-pet" required></select></div>
+                <div class="form-group"><label>Veterinarian *</label><select id="appt-vet"><option>Dr. S. Jenkins</option><option>Dr. M. Vance</option></select></div>
+                <div class="form-group"><label>Date *</label><input type="date" id="appt-date" required></div>
+                <div class="form-group"><label>Time Slot *</label><input type="time" id="appt-time" required></div>
+                <div class="form-group"><label>Reason *</label><input type="text" id="appt-reason" required></div>
                 <div class="modal-actions">
-                    <button type="button" class="secondary-btn" id="cancel-appointment-modal">Cancel</button>
-                    <button type="submit" class="primary-btn" id="save-appointment-btn">Confirm Booking</button>
+                    <button type="button" class="secondary-btn" onclick="app.ui.closeModals()">Cancel</button>
+                    <button type="submit" class="primary-btn">Confirm Booking</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Record Treatment Modal -->
-    <div class="modal-overlay" id="treatment-modal">
+    <div id="treatment-modal" class="modal-overlay">
         <div class="modal-card">
-            <div class="modal-header">
-                <h3 id="treatment-modal-title">Record Clinic Visit & Treatments</h3>
-                <button class="modal-close" id="close-treatment-modal">&times;</button>
-            </div>
-            <form id="treatment-form">
+            <h3>Clinical Visit Record</h3>
+            <form id="treatment-form" onsubmit="event.preventDefault(); app.treatments.save();">
                 <input type="hidden" id="treatment-id">
                 <input type="hidden" id="treatment-appt-id">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="treatment-pet" class="required">Select Pet / Patient</label>
-                        <select id="treatment-pet" required>
-                            <!-- Populated dynamically -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="treatment-date" class="required">Visit Date & Time</label>
-                        <input type="datetime-local" id="treatment-date" required>
-                    </div>
-                    <div class="form-group col-span-2">
-                        <label for="treatment-symptoms" class="required">Reported Symptoms</label>
-                        <textarea id="treatment-symptoms" rows="2" placeholder="Describe symptoms (e.g. lethargic, loss of appetite, itching)" required></textarea>
-                    </div>
-                    <div class="form-group col-span-2">
-                        <label for="treatment-diagnosis" class="required">Clinical Diagnosis</label>
-                        <input type="text" id="treatment-diagnosis" placeholder="Primary diagnosis (e.g. ear mite infection, seasonal allergies)" required>
-                    </div>
-                    <div class="form-group col-span-2">
-                        <label for="treatment-meds">Prescribed Medications & Dosage</label>
-                        <input type="text" id="treatment-meds" placeholder="e.g. Apoquel 5mg daily, Otomax ear drops 2x daily">
-                    </div>
-                    <div class="form-group">
-                        <label for="treatment-vaccine">Vaccine Administered (Optional)</label>
-                        <select id="treatment-vaccine">
-                            <option value="">None / N/A</option>
-                            <option value="Rabies">Rabies Vaccine</option>
-                            <option value="DHPP">DHPP (Canine Distemper/Parvo)</option>
-                            <option value="FVRCP">FVRCP (Feline Viral Rhinotracheitis/Calici/Panleukopenia)</option>
-                            <option value="Bordetella">Bordetella (Kennel Cough)</option>
-                            <option value="FeLV">FeLV (Feline Leukemia)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="treatment-cost" class="required">Treatment Cost ($)</label>
-                        <input type="number" step="0.01" min="0" id="treatment-cost" placeholder="75.00" required>
-                    </div>
-                    <div class="form-group col-span-2">
-                        <label for="treatment-notes">Internal Notes & Clinical Comments</label>
-                        <textarea id="treatment-notes" rows="2" placeholder="Any additional follow-up plans, food advice or advice to owner..."></textarea>
-                    </div>
-                </div>
+                <div class="form-group"><label>Patient *</label><select id="treatment-pet" required></select></div>
+                <div class="form-group"><label>Date & Time *</label><input type="datetime-local" id="treatment-date" required></div>
+                <div class="form-group"><label>Reported Symptoms *</label><textarea id="treatment-symptoms" required></textarea></div>
+                <div class="form-group"><label>Diagnosis *</label><input type="text" id="treatment-diagnosis" required></div>
+                <div class="form-group"><label>Medications</label><input type="text" id="treatment-meds"></div>
+                <div class="form-group"><label>Vaccine Administered</label><select id="treatment-vaccine"><option value="">-- None --</option><option>Rabies Vaccine</option><option>DHPP Vaccine</option><option>FVRCP Vaccine</option></select></div>
+                <div class="form-group"><label>Treatment Fee ($) *</label><input type="number" step="0.01" id="treatment-cost" required></div>
                 <div class="modal-actions">
-                    <button type="button" class="secondary-btn" id="cancel-treatment-modal">Cancel</button>
-                    <button type="submit" class="primary-btn">Save Treatment Record</button>
+                    <button type="button" class="secondary-btn" onclick="app.ui.closeModals()">Cancel</button>
+                    <button type="submit" class="primary-btn">Save Visit Record</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Invoice Receipt Detail Modal -->
-    <div class="modal-overlay no-print" id="invoice-modal">
-        <div class="modal-card" style="max-width: 500px;">
-            <div class="modal-header no-print">
-                <h3>Invoice Details</h3>
-                <button class="modal-close" id="close-invoice-modal">&times;</button>
-            </div>
-            <div class="invoice-receipt-container" id="printable-receipt-content" style="padding: 32px; background: white; color: #0f172a; font-family: monospace; line-height: 1.5;">
-                <!-- Thermal receipt/Invoice content styled via CSS for printing -->
-                <div class="receipt-header" style="text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 16px; margin-bottom: 16px;">
-                    <h2 style="font-weight: 800; font-size: 20px; letter-spacing: -0.5px; margin-bottom: 4px; color: #0f172a;">VETICARE CLINIC</h2>
-                    <p style="font-size: 12px; color: #64748b;">123 Healthcare Ave, Medical District</p>
-                    <p style="font-size: 12px; color: #64748b;">Tel: (555) 123-4567</p>
-                </div>
-                
-                <div class="receipt-meta" style="font-size: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
-                    <div>
-                        <strong>Invoice ID:</strong> <span id="inv-id">INV-000</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <strong>Date:</strong> <span id="inv-date">08/02/2026</span>
-                    </div>
-                </div>
-
-                <div class="receipt-parties" style="font-size: 11px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <div style="text-align: left;">
-                        <strong style="text-transform: uppercase; font-size: 10px; color: #64748b;">Billing To:</strong>
-                        <p style="font-weight: 700; margin-top: 2px; color: #0f172a;" id="inv-owner-name">John Doe</p>
-                        <p id="inv-owner-email">john@example.com</p>
-                        <p id="inv-owner-phone">(555) 123-4567</p>
-                    </div>
-                    <div style="text-align: right;">
-                        <strong style="text-transform: uppercase; font-size: 10px; color: #64748b;">Patient:</strong>
-                        <p style="font-weight: 700; margin-top: 2px; color: #0f172a;" id="inv-pet-name">Buddy</p>
-                        <p id="inv-pet-details">Dog / Golden Retriever</p>
-                    </div>
-                </div>
-
-                <div class="receipt-items" style="margin-bottom: 16px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid #cbd5e1; font-weight: 700; color: #0f172a;">
-                                <th style="padding: 6px 0;">Item Description</th>
-                                <th style="padding: 6px 0; text-align: right;">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inv-charges-list" style="color: #0f172a;">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="receipt-totals" style="border-top: 2px dashed #cbd5e1; padding-top: 12px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; color: #0f172a;">
-                    <div style="display: flex; justify-content: space-between; width: 180px;">
-                        <span>Subtotal:</span>
-                        <span id="inv-subtotal">$0.00</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; width: 180px;">
-                        <span>Tax (8%):</span>
-                        <span id="inv-tax">$0.00</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; width: 180px; font-size: 15px; font-weight: 800; border-top: 1px solid #000; padding-top: 6px; margin-top: 4px; color: #0f172a;">
-                        <span>Total Due:</span>
-                        <span id="inv-total">$0.00</span>
-                    </div>
-                </div>
-
-                <div class="receipt-status-stamp-box" style="text-align: center; margin-top: 20px; padding: 12px; border-radius: var(--border-radius-sm);" id="inv-status-stamp-box">
-                    <span id="inv-status-stamp" style="font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Paid</span>
-                </div>
-            </div>
-            <div class="modal-actions no-print" style="padding: 24px 32px; background: var(--bg-surface-elevated); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
-                <button type="button" class="secondary-btn" id="cancel-invoice-modal">Close</button>
-                <button type="button" class="accent-btn" id="print-invoice-btn" onclick="window.print()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    Print
-                </button>
-                <button type="button" class="primary-btn" id="pay-invoice-btn">Record Payment</button>
+    <!-- Thermal Receipt Print Modal -->
+    <div id="invoice-modal" class="modal-overlay">
+        <div class="modal-card thermal-receipt-card">
+            <div id="receipt-content" class="thermal-receipt"></div>
+            <div class="modal-actions no-print" style="margin-top:15px;">
+                <button type="button" class="secondary-btn" onclick="app.ui.closeModals()">Close</button>
+                <button type="button" class="primary-btn" onclick="window.print()">🖨️ Print Receipt</button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="owners.js"></script>
-    <script src="pets.js"></script>
-    <script src="appointments.js"></script>
-    <script src="treatments.js"></script>
-    <script src="billing.js"></script>
-    <script src="reports.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

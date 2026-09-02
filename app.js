@@ -1,605 +1,383 @@
 /**
- * VetiCare - Core Application Script
- * State Management, Routing, Database Operations, and Global UI Controllers
+ * VetiCare - Veterinary Clinic Management System (Academic Single File Client Engine)
  */
 
-window.app = window.app || {};
+window.app = {
+    // API & State Layer
+    apiURL: window.location.pathname.endsWith('.php') ? 'api.php' : '/api',
+    state: { owners: [], pets: [], appointments: [], treatments: [], invoices: [] },
 
-Object.assign(window.app, {
-    // Database Storage wrapper
-    db: {
-        // Base API URL
-        apiURL: 'http://localhost:3000/api',
-
-        // Memory cache representing DBMS state
-        state: {
-            owners: [],
-            pets: [],
-            appointments: [],
-            treatments: [],
-            invoices: []
-        },
-
-        // Helper wrapper to fetch table data from the backend
-        loadState: async () => {
-            try {
-                const [owners, pets, appointments, treatments, invoices] = await Promise.all([
-                    fetch(`${app.db.apiURL}/owners`).then(r => r.json()),
-                    fetch(`${app.db.apiURL}/pets`).then(r => r.json()),
-                    fetch(`${app.db.apiURL}/appointments`).then(r => r.json()),
-                    fetch(`${app.db.apiURL}/treatments`).then(r => r.json()),
-                    fetch(`${app.db.apiURL}/invoices`).then(r => r.json())
-                ]);
-
-                app.db.state = { owners, pets, appointments, treatments, invoices };
-            } catch (err) {
-                console.error('Error fetching state from DBMS backend:', err);
-            }
-        },
-
-        // Syncs with cached data synchronously to avoid breaking existing renderer logic
-        get: (key) => {
-            return app.db.state[key] || [];
-        },
-
-        // For backward compatibility and local states like theme
-        getLocal: (key) => JSON.parse(localStorage.getItem(`veticare_${key}`)),
-        setLocal: (key, data) => localStorage.setItem(`veticare_${key}`, JSON.stringify(data)),
-        
-        init: async () => {
-            // Seeding is handled backend-side in server.js now!
-            await app.db.loadState();
+    loadData: async () => {
+        try {
+            const url = app.apiURL === 'api.php' ? 'api.php?action=get_data' : '/api/data';
+            const res = await fetch(url);
+            const data = await res.json();
+            app.state = data;
+        } catch (err) {
+            console.error('Error connecting to backend API:', err);
         }
     },
 
-    // Simple Hash Router & View Switcher
+    postAPI: async (endpoint, actionPHP, payload) => {
+        const url = app.apiURL === 'api.php' ? `api.php?action=${actionPHP}` : `/api/${endpoint}`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        await app.loadData();
+        return await res.json();
+    },
+
+    putAPI: async (endpoint, actionPHP, payload = {}) => {
+        const url = app.apiURL === 'api.php' ? `api.php?action=${actionPHP}` : `/api/${endpoint}`;
+        await fetch(url, {
+            method: app.apiURL === 'api.php' ? 'POST' : 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        await app.loadData();
+    },
+
+    // Hash Router
     router: {
         activeView: 'dashboard',
-        
         init: () => {
             window.addEventListener('hashchange', async () => {
                 const hash = window.location.hash.slice(1) || 'dashboard';
-                // Reload state from backend
-                await app.db.loadState();
-
-                // Handle sub-pages (e.g. owner-details, pet-details)
-                if (hash.startsWith('owner-details/')) {
-                    const id = hash.split('/')[1];
-                    app.owners.showDetail(id);
-                } else if (hash.startsWith('pet-details/')) {
-                    const id = hash.split('/')[1];
-                    app.pets.showDetail(id);
-                } else {
-                    app.router.navigate(hash, false);
-                }
+                await app.loadData();
+                if (hash.startsWith('owner-details/')) app.owners.showDetail(hash.split('/')[1]);
+                else if (hash.startsWith('pet-details/')) app.pets.showDetail(hash.split('/')[1]);
+                else app.router.navigate(hash);
             });
-
-            // Trigger initial load
-            const initialHash = window.location.hash.slice(1) || 'dashboard';
-            (async () => {
-                await app.db.loadState();
-                if (initialHash.startsWith('owner-details/')) {
-                    app.owners.showDetail(initialHash.split('/')[1]);
-                } else if (initialHash.startsWith('pet-details/')) {
-                    app.pets.showDetail(initialHash.split('/')[1]);
-                } else {
-                    app.router.navigate(initialHash, false);
-                }
-            })();
         },
-
-        navigate: async (viewName, updateHash = true) => {
+        navigate: async (viewName) => {
             app.router.activeView = viewName;
-
-            // Load fresh data before render
-            await app.db.loadState();
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.getAttribute('data-view') === viewName));
+            document.querySelectorAll('.view-panel').forEach(el => el.classList.toggle('active', el.id === `view-${viewName}`));
             
-            // Toggle active class on sidebar navigation links
-            document.querySelectorAll('.nav-item').forEach(link => {
-                if (link.getAttribute('data-view') === viewName) {
-                    link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
-                }
-            });
-
-            // Update main action button in header based on current view
-            const actionBtn = document.getElementById('header-action-btn');
-            const actionText = document.getElementById('header-action-text');
-            
-            if (viewName === 'owners') {
-                actionBtn.style.display = 'inline-flex';
-                actionText.textContent = 'Add Owner';
-                actionBtn.onclick = () => app.ui.openOwnerModal();
-            } else if (viewName === 'pets') {
-                actionBtn.style.display = 'inline-flex';
-                actionText.textContent = 'Add Patient';
-                actionBtn.onclick = () => app.ui.openPetModal();
-            } else if (viewName === 'appointments') {
-                actionBtn.style.display = 'inline-flex';
-                actionText.textContent = 'Book Slot';
-                actionBtn.onclick = () => app.ui.openAppointmentModal();
-            } else if (viewName === 'treatments') {
-                actionBtn.style.display = 'inline-flex';
-                actionText.textContent = 'Record Visit';
-                actionBtn.onclick = () => app.ui.openTreatmentModal();
-            } else {
-                actionBtn.style.display = 'none';
-            }
-
-            // Switch visible panel in UI
-            document.querySelectorAll('.view-panel').forEach(panel => {
-                if (panel.id === `view-${viewName}`) {
-                    panel.classList.add('active');
-                } else {
-                    panel.classList.remove('active');
-                }
-            });
-
-            // Render view-specific content
-            if (viewName === 'dashboard') {
-                app.dashboard.render();
-            } else if (viewName === 'owners') {
-                app.owners.renderList();
-            } else if (viewName === 'pets') {
-                app.pets.renderList();
-            } else if (viewName === 'appointments') {
-                app.appointments.initCalendar();
-                app.appointments.renderAgenda();
-            } else if (viewName === 'treatments') {
-                app.treatments.renderList();
-            } else if (viewName === 'billing') {
-                app.billing.renderList();
-            } else if (viewName === 'reports') {
-                app.reports.render();
-            }
-
-            if (updateHash) {
-                window.location.hash = viewName;
-            }
-
-            // Scroll view back to top
-            document.querySelector('.view-viewport').scrollTop = 0;
+            if (viewName === 'dashboard') app.dashboard.render();
+            else if (viewName === 'owners') app.owners.render();
+            else if (viewName === 'pets') app.pets.render();
+            else if (viewName === 'appointments') app.appointments.render();
+            else if (viewName === 'treatments') app.treatments.render();
+            else if (viewName === 'billing') app.billing.render();
         }
     },
 
-    // Dashboard calculations and visualizations
+    // Dashboard
     dashboard: {
         render: () => {
-            const owners = app.db.get('owners') || [];
-            const pets = app.db.get('pets') || [];
-            const appointments = app.db.get('appointments') || [];
-            const treatments = app.db.get('treatments') || [];
-
-            // Stats computations
+            const { owners, pets, appointments, invoices } = app.state;
+            document.getElementById('stat-pets-count').textContent = pets.length;
+            document.getElementById('stat-owners-count').textContent = owners.length;
+            
             const todayStr = new Date().toISOString().split('T')[0];
-            const todayAppointments = appointments.filter(a => a.dateTime.startsWith(todayStr));
-            
-            // Calculate today's revenue (from treatments recorded today, plus general consultation fee $50 for finished appointments)
-            const completedToday = appointments.filter(a => a.dateTime.startsWith(todayStr) && a.status === 'Completed');
-            let todayRevenue = completedToday.length * 50; // base fee
-            
-            treatments.forEach(t => {
-                if (t.dateTime.startsWith(todayStr)) {
-                    todayRevenue += Number(t.cost || 0);
-                }
-            });
+            const todayAppts = appointments.filter(a => a.dateTime.startsWith(todayStr));
+            document.getElementById('stat-today-count').textContent = todayAppts.length;
 
-            // Update UI Elements
-            document.getElementById('stat-owners').textContent = owners.length;
-            document.getElementById('stat-pets').textContent = pets.length;
-            document.getElementById('stat-appointments').textContent = todayAppointments.length;
-            document.getElementById('today-apt-count').textContent = todayAppointments.length;
-            document.getElementById('stat-revenue').textContent = `$${todayRevenue.toFixed(2)}`;
+            const paidTotal = invoices.filter(i => i.status === 'Paid').reduce((sum, i) => sum + Number(i.total), 0);
+            document.getElementById('stat-revenue').textContent = `$${paidTotal.toFixed(2)}`;
 
-            // Render Today's Schedule List
-            const scheduleContainer = document.getElementById('dashboard-schedule');
-            scheduleContainer.innerHTML = '';
-
-            if (todayAppointments.length === 0) {
-                scheduleContainer.innerHTML = '<div class="empty-state">No appointments scheduled for today.</div>';
-            } else {
-                // Sort by time
-                todayAppointments.sort((a, b) => a.dateTime.localeCompare(b.dateTime));
-                
-                todayAppointments.forEach(apt => {
-                    const pet = pets.find(p => p.id === apt.petId) || { name: 'Unknown Patient' };
-                    const owner = owners.find(o => o.id === pet.ownerId) || { name: 'Unknown Owner' };
-                    const time = apt.dateTime.split('T')[1];
-                    
-                    const item = document.createElement('div');
-                    item.className = 'schedule-item';
-                    item.onclick = () => window.location.hash = `pet-details/${pet.id}`;
-                    item.innerHTML = `
-                        <div class="sch-time">${time}</div>
-                        <div class="sch-info">
-                            <div class="sch-pet-name">
-                                ${pet.name} 
-                                <span class="badge" style="background-color: var(--bg-surface-elevated); font-size: 10px; padding: 2px 6px;">
-                                    ${pet.species}
-                                </span>
-                            </div>
-                            <div class="sch-owner">Owner: ${owner.name}</div>
-                        </div>
-                        <span class="sch-type">${apt.reason}</span>
-                    `;
-                    scheduleContainer.appendChild(item);
-                });
-            }
-
-            // Render Species breakdown chart (Dynamic SVG Pie/Donut Chart)
-            app.dashboard.renderSpeciesChart(pets);
-        },
-
-        renderSpeciesChart: (pets) => {
-            const chartDiv = document.getElementById('species-breakdown-chart');
-            const legendDiv = document.getElementById('species-legends');
-            chartDiv.innerHTML = '';
-            legendDiv.innerHTML = '';
-
-            if (pets.length === 0) {
-                chartDiv.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding-top:40px;">No Data</div>';
-                return;
-            }
-
-            // Calculate frequencies
-            const speciesCounts = {};
-            pets.forEach(p => {
-                const sp = p.species || 'Other';
-                speciesCounts[sp] = (speciesCounts[sp] || 0) + 1;
-            });
-
-            const total = pets.length;
-            const speciesArray = Object.entries(speciesCounts).map(([name, count]) => ({
-                name,
-                count,
-                percentage: (count / total) * 100
-            }));
-
-            // Colors array
-            const colors = ['var(--color-primary)', 'var(--color-secondary)', 'var(--color-accent)', 'var(--color-success)', '#94a3b8'];
-
-            // Generate Donut SVG
-            let svgContent = `<svg width="100%" height="100%" viewBox="0 0 42 42" class="donut">
-                <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="transparent"></circle>
-                <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="var(--border-color)" stroke-width="4"></circle>
-            `;
-
-            let accumulatedPercentage = 0;
-            speciesArray.forEach((item, index) => {
-                const color = colors[index % colors.length];
-                const dashArray = `${item.percentage} ${100 - item.percentage}`;
-                const dashOffset = 100 - accumulatedPercentage + 25; // start from top (12 o'clock)
-                
-                svgContent += `
-                    <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" 
-                            fill="transparent" stroke="${color}" stroke-width="4.2" 
-                            stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}">
-                    </circle>
-                `;
-                
-                accumulatedPercentage += item.percentage;
-
-                // Render legend
-                const legendItem = document.createElement('div');
-                legendItem.className = 'legend-item';
-                legendItem.innerHTML = `
-                    <span class="legend-color" style="background-color: ${color};"></span>
-                    <span>${item.name} (${item.count})</span>
-                `;
-                legendDiv.appendChild(legendItem);
-            });
-
-            // Center text
-            svgContent += `
-                <g class="chart-text">
-                    <text x="50%" y="50%" class="chart-number" text-anchor="middle" dy="-2" fill="var(--text-main)" font-size="6" font-weight="800">${total}</text>
-                    <text x="50%" y="50%" class="chart-label" text-anchor="middle" dy="4" fill="var(--text-muted)" font-size="3" font-weight="600">Total Pets</text>
-                </g>
-            </svg>`;
-
-            chartDiv.innerHTML = svgContent;
+            const list = document.getElementById('recent-visits-list');
+            list.innerHTML = app.state.treatments.slice(0, 5).map(t => {
+                const pet = pets.find(p => p.id === t.petId) || { name: 'Pet' };
+                return `<div class="activity-item"><strong>${pet.name}</strong> - Diagnosis: ${t.diagnosis} ($${Number(t.cost).toFixed(2)})</div>`;
+            }).join('') || '<div class="activity-item">No clinical activity recorded.</div>';
         }
     },
 
-    // UI Overlay / Modals Controller
+    // Owners Module
+    owners: {
+        render: (query = '') => {
+            const grid = document.getElementById('owners-grid');
+            let list = app.state.owners;
+            if (query) list = list.filter(o => o.name.toLowerCase().includes(query.toLowerCase()));
+            
+            grid.innerHTML = list.map(o => {
+                const petCount = app.state.pets.filter(p => p.ownerId === o.id).length;
+                return `
+                <div class="card" onclick="window.location.hash='owner-details/${o.id}'">
+                    <h3>${o.name}</h3>
+                    <p>${o.phone} • ${o.email}</p>
+                    <span class="badge badge-success" style="margin-top:8px;">${petCount} Pets</span>
+                </div>`;
+            }).join('');
+        },
+        showDetail: (id) => {
+            const owner = app.state.owners.find(o => o.id === id);
+            if (!owner) return window.location.hash = 'owners';
+            
+            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('view-owner-details').classList.add('active');
+            
+            document.getElementById('od-avatar').textContent = owner.name[0];
+            document.getElementById('od-name').textContent = owner.name;
+            document.getElementById('od-contact').textContent = `${owner.phone} | ${owner.email} | ${owner.address}`;
+            
+            const petsList = app.state.pets.filter(p => p.ownerId === id);
+            document.getElementById('od-pets-list').innerHTML = petsList.map(p => `
+                <div class="card" onclick="window.location.hash='pet-details/${p.id}'">
+                    <h4>${p.name} (${p.species})</h4>
+                    <p>${p.breed} • ${p.weight} kg</p>
+                </div>
+            `).join('') || '<p>No pets registered.</p>';
+
+            document.getElementById('btn-add-pet-to-owner').onclick = () => app.ui.openPetModal(null, owner.id);
+        },
+        save: async () => {
+            const id = document.getElementById('owner-id').value;
+            const payload = {
+                id: id || undefined,
+                name: document.getElementById('owner-name').value,
+                phone: document.getElementById('owner-phone').value,
+                email: document.getElementById('owner-email').value,
+                address: document.getElementById('owner-address').value,
+                emergencyContact: document.getElementById('owner-emergency').value,
+            };
+            await app.postAPI('owners', 'save_owner', payload);
+            app.ui.closeModals();
+            app.owners.render();
+        }
+    },
+
+    // Pets Module
+    pets: {
+        render: (query = '') => {
+            const grid = document.getElementById('pets-grid');
+            let list = app.state.pets;
+            if (query) list = list.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
+
+            grid.innerHTML = list.map(p => `
+                <div class="card" onclick="window.location.hash='pet-details/${p.id}'">
+                    <h3>${p.name}</h3>
+                    <p>${p.species} - ${p.breed}</p>
+                    <span class="badge ${p.vaccination === 'Up-to-date' ? 'badge-success' : 'badge-warning'}">${p.vaccination}</span>
+                </div>
+            `).join('');
+        },
+        showDetail: (id) => {
+            const pet = app.state.pets.find(p => p.id === id);
+            if (!pet) return window.location.hash = 'pets';
+
+            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('view-pet-details').classList.add('active');
+
+            document.getElementById('pd-name').textContent = pet.name;
+            document.getElementById('pd-meta').textContent = `${pet.species} • ${pet.breed} • DOB: ${pet.dob} (${pet.weight} kg)`;
+            
+            const badge = document.getElementById('pd-vaccine-badge');
+            badge.textContent = pet.vaccination;
+            badge.className = `badge ${pet.vaccination === 'Up-to-date' ? 'badge-success' : 'badge-warning'}`;
+
+            const treatments = app.state.treatments.filter(t => t.petId === id);
+            document.getElementById('pd-treatments-list').innerHTML = treatments.map(t => `
+                <div class="activity-item">
+                    <strong>${t.dateTime}</strong> - Diagnosis: ${t.diagnosis} (${t.symptoms})
+                </div>
+            `).join('') || '<p>No visit history recorded.</p>';
+        },
+        save: async () => {
+            const id = document.getElementById('pet-id').value;
+            const payload = {
+                id: id || undefined,
+                ownerId: document.getElementById('pet-owner').value,
+                name: document.getElementById('pet-name').value,
+                species: document.getElementById('pet-species').value,
+                breed: document.getElementById('pet-breed').value,
+                dob: document.getElementById('pet-dob').value,
+                weight: parseFloat(document.getElementById('pet-weight').value),
+                vaccination: document.getElementById('pet-vaccination').value,
+                notes: document.getElementById('pet-notes').value
+            };
+            await app.postAPI('pets', 'save_pet', payload);
+            app.ui.closeModals();
+            app.pets.render();
+        }
+    },
+
+    // Appointments Module
+    appointments: {
+        render: () => {
+            const list = document.getElementById('agenda-list');
+            list.innerHTML = app.state.appointments.map(a => {
+                const pet = app.state.pets.find(p => p.id === a.petId) || { name: 'Pet' };
+                const isScheduled = a.status === 'Scheduled';
+                return `
+                <div class="activity-item" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>${a.dateTime}</strong> - <span>${pet.name}</span> (${a.vetName})
+                        <p style="color:var(--text-muted); font-size:0.85rem;">${a.reason}</p>
+                    </div>
+                    <div>
+                        ${isScheduled ? `
+                            <button class="secondary-btn btn-sm" onclick="app.appointments.cancel('${a.id}')">Cancel</button>
+                            <button class="primary-btn btn-sm" onclick="app.ui.openTreatmentModal(null, '${a.petId}', '${a.id}')">Complete</button>
+                        ` : `<span class="badge ${a.status === 'Completed' ? 'badge-success' : 'badge-danger'}">${a.status}</span>`}
+                    </div>
+                </div>`;
+            }).join('') || '<div class="activity-item">No appointments scheduled.</div>';
+        },
+        save: async () => {
+            const payload = {
+                id: document.getElementById('appointment-id').value || undefined,
+                petId: document.getElementById('appt-pet').value,
+                vetName: document.getElementById('appt-vet').value,
+                dateTime: `${document.getElementById('appt-date').value}T${document.getElementById('appt-time').value}`,
+                reason: document.getElementById('appt-reason').value
+            };
+            await app.postAPI('appointments', 'save_appointment', payload);
+            app.ui.closeModals();
+            app.appointments.render();
+        },
+        cancel: async (id) => {
+            await app.putAPI(`appointments/${id}/cancel`, 'cancel_appointment', { id });
+            app.appointments.render();
+        }
+    },
+
+    // Treatments Module
+    treatments: {
+        render: () => {
+            const list = document.getElementById('treatments-list');
+            list.innerHTML = app.state.treatments.map(t => {
+                const pet = app.state.pets.find(p => p.id === t.petId) || { name: 'Pet' };
+                return `
+                <div class="activity-item">
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>${pet.name} - ${t.diagnosis}</strong>
+                        <span>$${Number(t.cost).toFixed(2)}</span>
+                    </div>
+                    <p style="color:var(--text-muted); font-size:0.85rem;">Symptoms: ${t.symptoms} | Meds: ${t.medications || 'None'}</p>
+                </div>`;
+            }).join('') || '<div class="activity-item">No visits recorded.</div>';
+        },
+        save: async () => {
+            const apptId = document.getElementById('treatment-appt-id').value;
+            const payload = {
+                id: document.getElementById('treatment-id').value || undefined,
+                appointmentId: apptId || undefined,
+                petId: document.getElementById('treatment-pet').value,
+                dateTime: document.getElementById('treatment-date').value,
+                symptoms: document.getElementById('treatment-symptoms').value,
+                diagnosis: document.getElementById('treatment-diagnosis').value,
+                medications: document.getElementById('treatment-meds').value,
+                vaccineGiven: document.getElementById('treatment-vaccine').value,
+                cost: parseFloat(document.getElementById('treatment-cost').value)
+            };
+            if (apptId) await app.putAPI(`appointments/${apptId}/complete`, 'complete_appointment', { id: apptId });
+            await app.postAPI('treatments', 'save_treatment', payload);
+            app.ui.closeModals();
+            app.treatments.render();
+        }
+    },
+
+    // Billing Module
+    billing: {
+        render: (query = '') => {
+            const tbody = document.getElementById('invoices-table-body');
+            let list = app.state.invoices;
+            if (query) list = list.filter(i => i.id.toLowerCase().includes(query.toLowerCase()) || i.reason.toLowerCase().includes(query.toLowerCase()));
+
+            tbody.innerHTML = list.map(inv => {
+                const pet = app.state.pets.find(p => p.id === inv.petId) || { name: 'Pet' };
+                const isPaid = inv.status === 'Paid';
+                return `
+                <tr>
+                    <td>${inv.id}</td>
+                    <td>${inv.dateTime}</td>
+                    <td>${pet.name}</td>
+                    <td>${inv.reason}</td>
+                    <td>$${Number(inv.total).toFixed(2)}</td>
+                    <td><span class="badge ${isPaid ? 'badge-success' : 'badge-warning'}">${inv.status}</span></td>
+                    <td>
+                        <button class="secondary-btn btn-sm" onclick="app.billing.openReceipt('${inv.id}')">Receipt</button>
+                        ${!isPaid ? `<button class="primary-btn btn-sm" onclick="app.billing.pay('${inv.id}')">Pay</button>` : ''}
+                    </td>
+                </tr>`;
+            }).join('');
+        },
+        pay: async (id) => {
+            await app.putAPI(`invoices/${id}/pay`, 'pay_invoice', { id });
+            app.billing.render();
+        },
+        openReceipt: (invId) => {
+            const inv = app.state.invoices.find(i => i.id === invId);
+            if (!inv) return;
+            const pet = app.state.pets.find(p => p.id === inv.petId) || { name: 'Pet' };
+
+            document.getElementById('receipt-content').innerHTML = `
+                <header>
+                    <h2>VetiCare Clinic</h2>
+                    <p>Official Receipt #${inv.id}</p>
+                    <p>Date: ${inv.dateTime}</p>
+                </header>
+                <p><strong>Patient:</strong> ${pet.name}</p>
+                <p><strong>Reason:</strong> ${inv.reason}</p>
+                <hr style="border:none; border-top:1px dashed #000; margin:8px 0;">
+                <table>
+                    <tr><td>Consultation Fee:</td><td style="text-align:right">$${Number(inv.consultationFee).toFixed(2)}</td></tr>
+                    <tr><td>Treatment Fee:</td><td style="text-align:right">$${Number(inv.treatmentCost).toFixed(2)}</td></tr>
+                    <tr><td>Pharmacy/Meds:</td><td style="text-align:right">$${Number(inv.medicineCost).toFixed(2)}</td></tr>
+                    <tr><td>Tax (8%):</td><td style="text-align:right">$${Number(inv.tax).toFixed(2)}</td></tr>
+                    <tr style="font-weight:bold;"><td>Total:</td><td style="text-align:right">$${Number(inv.total).toFixed(2)}</td></tr>
+                </table>
+                <p style="text-align:center; margin-top:10px;">Status: <strong>${inv.status}</strong></p>
+            `;
+            document.getElementById('invoice-modal').classList.add('active');
+        }
+    },
+
+    // UI Helpers & Modals
     ui: {
-        theme: 'dark',
-
         init: () => {
-            // Theme Toggle
-            const savedTheme = localStorage.getItem('veticare_theme') || 'dark';
-            app.ui.setTheme(savedTheme);
-
-            document.getElementById('theme-toggle').onclick = () => {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                app.ui.setTheme(nextTheme);
+            document.getElementById('theme-btn').onclick = () => {
+                const current = document.documentElement.getAttribute('data-theme');
+                document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
             };
 
-            // Global search interaction
-            const searchInput = document.getElementById('global-search');
-            searchInput.oninput = (e) => {
-                const query = e.target.value.toLowerCase();
-                if (app.router.activeView === 'owners') {
-                    app.owners.renderList(query);
-                } else if (app.router.activeView === 'pets') {
-                    app.pets.renderList(query);
-                }
-            };
-
-            // Setup modals click-to-close on overlay
-            document.querySelectorAll('.modal-overlay').forEach(overlay => {
-                overlay.onclick = (e) => {
-                    if (e.target === overlay) {
-                        app.ui.closeAllModals();
-                    }
-                };
-            });
-
-            // Modal Close Buttons
-            document.getElementById('close-owner-modal').onclick = () => app.ui.closeAllModals();
-            document.getElementById('cancel-owner-modal').onclick = () => app.ui.closeAllModals();
-            document.getElementById('close-pet-modal').onclick = () => app.ui.closeAllModals();
-            document.getElementById('cancel-pet-modal').onclick = () => app.ui.closeAllModals();
-            document.getElementById('close-appointment-modal').onclick = () => app.ui.closeAllModals();
-            document.getElementById('cancel-appointment-modal').onclick = () => app.ui.closeAllModals();
-            document.getElementById('close-treatment-modal').onclick = () => app.ui.closeAllModals();
-            document.getElementById('cancel-treatment-modal').onclick = () => app.ui.closeAllModals();
-            document.getElementById('close-invoice-modal').onclick = () => app.ui.closeAllModals();
-            document.getElementById('cancel-invoice-modal').onclick = () => app.ui.closeAllModals();
-
-            // Submit Forms
-            document.getElementById('owner-form').onsubmit = (e) => {
-                e.preventDefault();
-                app.owners.save();
-            };
-
-            document.getElementById('pet-form').onsubmit = (e) => {
-                e.preventDefault();
-                app.pets.save();
-            };
-
-            document.getElementById('appointment-form').onsubmit = (e) => {
-                e.preventDefault();
-                app.appointments.save();
-            };
-
-            document.getElementById('treatment-form').onsubmit = (e) => {
-                e.preventDefault();
-                app.treatments.save();
-            };
+            document.getElementById('owner-search').oninput = (e) => app.owners.render(e.target.value);
+            document.getElementById('pet-search').oninput = (e) => app.pets.render(e.target.value);
+            document.getElementById('billing-search').oninput = (e) => app.billing.render(e.target.value);
         },
-
-        setTheme: (theme) => {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('veticare_theme', theme);
-            app.ui.theme = theme;
-        },
-
-        closeAllModals: () => {
-            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        closeModals: () => document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')),
+        openOwnerModal: () => {
             document.getElementById('owner-form').reset();
-            document.getElementById('pet-form').reset();
-            document.getElementById('appointment-form').reset();
-            document.getElementById('treatment-form').reset();
             document.getElementById('owner-id').value = '';
+            document.getElementById('owner-modal').classList.add('active');
+        },
+        openPetModal: (pet = null, ownerId = null) => {
+            const select = document.getElementById('pet-owner');
+            select.innerHTML = app.state.owners.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+            if (ownerId) select.value = ownerId;
+            document.getElementById('pet-form').reset();
             document.getElementById('pet-id').value = '';
-            document.getElementById('appointment-id').value = '';
-            document.getElementById('treatment-id').value = '';
-            document.getElementById('treatment-appt-id').value = '';
-            document.getElementById('appointment-collision-alert').style.display = 'none';
+            document.getElementById('pet-modal').classList.add('active');
         },
-
-        openAppointmentModal: (apptData = null, preselectedDate = null) => {
-            app.ui.closeAllModals();
-            const modal = document.getElementById('appointment-modal');
-            const title = document.getElementById('appointment-modal-title');
-            const petSelect = document.getElementById('appt-pet');
-            
-            // Populate pets select
-            const pets = app.db.get('pets') || [];
-            petSelect.innerHTML = '<option value="" disabled selected>Select Pet / Patient...</option>';
-            pets.sort((a, b) => a.name.localeCompare(b.name)).forEach(pet => {
-                petSelect.innerHTML += `<option value="${pet.id}">${pet.name} (${pet.species})</option>`;
-            });
-
-            if (apptData) {
-                title.textContent = 'Edit Consultation Slot';
-                document.getElementById('appointment-id').value = apptData.id;
-                document.getElementById('appt-pet').value = apptData.petId;
-                document.getElementById('appt-vet').value = apptData.vetName;
-                document.getElementById('appt-date').value = apptData.dateTime.split('T')[0];
-                document.getElementById('appt-time').value = apptData.dateTime.split('T')[1];
-                document.getElementById('appt-reason').value = apptData.reason;
-            } else {
-                title.textContent = 'Book Consultation Slot';
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('appt-date').value = preselectedDate || today;
-            }
-
-            modal.classList.add('active');
+        openAppointmentModal: () => {
+            const select = document.getElementById('appt-pet');
+            select.innerHTML = app.state.pets.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            document.getElementById('appointment-form').reset();
+            document.getElementById('appt-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('appointment-modal').classList.add('active');
         },
-
-        openTreatmentModal: (treatmentData = null, prefilledPetId = null, prefilledApptId = null) => {
-            app.ui.closeAllModals();
-            const modal = document.getElementById('treatment-modal');
-            const title = document.getElementById('treatment-modal-title');
-            const petSelect = document.getElementById('treatment-pet');
-
-            // Populate pets select
-            const pets = app.db.get('pets') || [];
-            petSelect.innerHTML = '<option value="" disabled selected>Select Pet / Patient...</option>';
-            pets.sort((a, b) => a.name.localeCompare(b.name)).forEach(pet => {
-                petSelect.innerHTML += `<option value="${pet.id}">${pet.name} (${pet.species})</option>`;
-            });
-
-            if (treatmentData) {
-                title.textContent = 'Edit Treatment Record';
-                document.getElementById('treatment-id').value = treatmentData.id;
-                document.getElementById('treatment-appt-id').value = treatmentData.appointmentId || '';
-                document.getElementById('treatment-pet').value = treatmentData.petId;
-                document.getElementById('treatment-date').value = treatmentData.dateTime;
-                document.getElementById('treatment-symptoms').value = treatmentData.symptoms;
-                document.getElementById('treatment-diagnosis').value = treatmentData.diagnosis;
-                document.getElementById('treatment-meds').value = treatmentData.medications || '';
-                document.getElementById('treatment-vaccine').value = treatmentData.vaccineGiven || '';
-                document.getElementById('treatment-cost').value = treatmentData.cost;
-                document.getElementById('treatment-notes').value = treatmentData.notes || '';
-            } else {
-                title.textContent = 'Record Clinic Visit & Treatments';
-                
-                // Prefills
-                if (prefilledPetId) {
-                    petSelect.value = prefilledPetId;
-                }
-                if (prefilledApptId) {
-                    document.getElementById('treatment-appt-id').value = prefilledApptId;
-                }
-                
-                // Prefill current date & time
-                const now = new Date();
-                const tzOffset = now.getTimezoneOffset() * 60000;
-                const localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, 16);
-                document.getElementById('treatment-date').value = localISOTime;
-            }
-
-            modal.classList.add('active');
-        },
-
-        openOwnerModal: (ownerData = null) => {
-            app.ui.closeAllModals();
-            const modal = document.getElementById('owner-modal');
-            const title = document.getElementById('owner-modal-title');
-            
-            if (ownerData) {
-                title.textContent = 'Edit Owner Profile';
-                document.getElementById('owner-id').value = ownerData.id;
-                document.getElementById('owner-name').value = ownerData.name;
-                document.getElementById('owner-phone').value = ownerData.phone;
-                document.getElementById('owner-email').value = ownerData.email;
-                document.getElementById('owner-address').value = ownerData.address || '';
-                document.getElementById('owner-emergency').value = ownerData.emergencyContact || '';
-            } else {
-                title.textContent = 'Register New Owner';
-            }
-            
-            modal.classList.add('active');
-            document.getElementById('owner-name').focus();
-        },
-
-        openPetModal: (petData = null, preselectedOwnerId = null) => {
-            app.ui.closeAllModals();
-            const modal = document.getElementById('pet-modal');
-            const title = document.getElementById('pet-modal-title');
-            const ownerSelect = document.getElementById('pet-owner');
-            
-            // Populate owners dropdown selection list
-            const owners = app.db.get('owners') || [];
-            ownerSelect.innerHTML = '<option value="" disabled selected>Select Owner...</option>';
-            owners.sort((a, b) => a.name.localeCompare(b.name)).forEach(owner => {
-                ownerSelect.innerHTML += `<option value="${owner.id}">${owner.name}</option>`;
-            });
-
-            if (petData) {
-                title.textContent = 'Edit Patient Profile';
-                document.getElementById('pet-id').value = petData.id;
-                document.getElementById('pet-name').value = petData.name;
-                document.getElementById('pet-owner').value = petData.ownerId;
-                document.getElementById('pet-species').value = petData.species;
-                document.getElementById('pet-breed').value = petData.breed;
-                document.getElementById('pet-dob').value = petData.dob;
-                document.getElementById('pet-weight').value = petData.weight;
-                document.getElementById('pet-vaccination').value = petData.vaccination;
-                document.getElementById('pet-notes').value = petData.notes || '';
-            } else {
-                title.textContent = 'Add New Patient Profile';
-                if (preselectedOwnerId) {
-                    ownerSelect.value = preselectedOwnerId;
-                }
-            }
-
-            modal.classList.add('active');
-            document.getElementById('pet-name').focus();
-        },
-
-        openInvoiceModal: (invoice) => {
-            app.ui.closeAllModals();
-            const modal = document.getElementById('invoice-modal');
-
-            const pets = app.db.get('pets') || [];
-            const owners = app.db.get('owners') || [];
-
-            const pet = pets.find(p => p.id === invoice.petId) || { name: 'Unknown Pet', species: 'Other', breed: 'Unknown', ownerId: '' };
-            const owner = owners.find(o => o.id === pet.ownerId) || { name: 'Unknown Owner', email: '-', phone: '-' };
-
-            // Populate text elements
-            document.getElementById('inv-id').textContent = invoice.id;
-            document.getElementById('inv-date').textContent = new Date(invoice.dateTime).toLocaleString();
-            document.getElementById('inv-owner-name').textContent = owner.name;
-            document.getElementById('inv-owner-email').textContent = owner.email;
-            document.getElementById('inv-owner-phone').textContent = owner.phone;
-            document.getElementById('inv-pet-name').textContent = pet.name;
-            document.getElementById('inv-pet-details').textContent = `${pet.species} / ${pet.breed}`;
-
-            // Line items
-            const chargesList = document.getElementById('inv-charges-list');
-            chargesList.innerHTML = `
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 8px 0; color: #0f172a;">Base Consultation Fee</td>
-                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.consultationFee).toFixed(2)}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 8px 0; color: #0f172a;">Clinical Treatment (${invoice.reason})</td>
-                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.treatmentCost).toFixed(2)}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 8px 0; color: #0f172a;">Pharmacy / Medicines</td>
-                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.medicineCost).toFixed(2)}</td>
-                </tr>
-            `;
-
-            // Totals
-            const subtotal = Number(invoice.consultationFee) + Number(invoice.treatmentCost) + Number(invoice.medicineCost);
-            const tax = Number(invoice.tax);
-            const total = Number(invoice.total);
-
-            document.getElementById('inv-subtotal').textContent = `$${subtotal.toFixed(2)}`;
-            document.getElementById('inv-tax').textContent = `$${tax.toFixed(2)}`;
-            document.getElementById('inv-total').textContent = `$${total.toFixed(2)}`;
-
-            // Stamp boxes
-            const stampBox = document.getElementById('inv-status-stamp-box');
-            const stampLabel = document.getElementById('inv-status-stamp');
-            const payBtn = document.getElementById('pay-invoice-btn');
-
-            stampBox.className = 'receipt-status-stamp-box';
-            if (invoice.status === 'Paid') {
-                stampBox.classList.add('stamp-paid');
-                stampLabel.textContent = 'Paid';
-                payBtn.style.display = 'none';
-            } else {
-                stampBox.classList.add('stamp-pending');
-                stampLabel.textContent = 'Pending';
-                payBtn.style.display = 'inline-flex';
-                payBtn.onclick = () => {
-                    app.billing.pay(invoice.id);
-                };
-            }
-
-            modal.classList.add('active');
+        openTreatmentModal: (t = null, petId = null, apptId = null) => {
+            const select = document.getElementById('treatment-pet');
+            select.innerHTML = app.state.pets.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            if (petId) select.value = petId;
+            document.getElementById('treatment-form').reset();
+            document.getElementById('treatment-appt-id').value = apptId || '';
+            document.getElementById('treatment-date').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('treatment-modal').classList.add('active');
         }
-    },
-
-    // Initialization hook
-    init: async () => {
-        await app.db.init();
-        app.ui.init();
-        app.router.init();
     }
-});
+};
 
-// Start application when DOM is fully ready
-document.addEventListener('DOMContentLoaded', () => {
-    app.init();
+// Initialize Application on DOM Ready
+document.addEventListener('DOMContentLoaded', async () => {
+    app.ui.init();
+    app.router.init();
+    await app.loadData();
+    const initialHash = window.location.hash.slice(1) || 'dashboard';
+    app.router.navigate(initialHash);
 });
