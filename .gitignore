@@ -1,2 +1,4 @@
 node_modules/
 veticare.db
+Report/__pycache__
+Report/chapters/__pycache__
