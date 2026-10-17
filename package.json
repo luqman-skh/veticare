@@ -4,6 +4,7 @@
   "description": "Veterinary Clinic Appointment & Pet Management System",
   "main": "index.html",
   "scripts": {
+    "start": "node server.js",
     "dev": "concurrently \"node server.js\" \"vite\"",
     "build": "vite build",
     "preview": "vite preview"

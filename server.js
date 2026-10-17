@@ -6,21 +6,48 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
-app.use(cors());
+// Configurable CORS: allow specific origins in production or all by default
+const corsOrigin = process.env.CORS_ORIGIN 
+    ? (process.env.CORS_ORIGIN === '*' ? '*' : process.env.CORS_ORIGIN.split(',').map(s => s.trim()))
+    : '*';
+
+app.use(cors({
+    origin: corsOrigin,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
-// Initialize Supabase client (service role key bypasses RLS for server-side operations)
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Validate required Supabase credentials
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-console.log('Connected to Supabase at:', process.env.SUPABASE_URL);
+if (!supabaseUrl || !supabaseKey) {
+    console.warn('\x1b[33m%s\x1b[0m', '[WARNING] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env file. Database queries will fail until credentials are configured.');
+}
+
+// Initialize Supabase client
+const supabase = createClient(supabaseUrl || '', supabaseKey || '');
+
+console.log(`Supabase client initialized for: ${supabaseUrl ? supabaseUrl : '(not set)'}`);
+
+// Health check endpoint for cloud deployment platforms (Render, Railway, AWS, etc.)
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
+});
 
 // ==================== REST API ENDPOINTS ====================
 
@@ -426,7 +453,28 @@ app.delete('/api/invoices/:id', async (req, res) => {
     }
 });
 
+// ==================== STATIC FRONTEND SERVING ====================
+// Serve built production files from /dist if available, otherwise serve project root
+const distPath = path.join(__dirname, 'dist');
+if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+} else {
+    app.use(express.static(__dirname));
+}
+
+// Single-page application (SPA) client-side routing fallback
+app.use((req, res) => {
+    // If it's an API route that didn't match any handler, return 404 JSON
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    const htmlPath = fs.existsSync(path.join(distPath, 'index.html'))
+        ? path.join(distPath, 'index.html')
+        : path.join(__dirname, 'index.html');
+    res.sendFile(htmlPath);
+});
+
 // Start Express Server
-app.listen(PORT, () => {
-    console.log(`VetiCare Backend DBMS Server listening on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+    console.log(`VetiCare Server running on http://${HOST}:${PORT}`);
 });

@@ -147,24 +147,52 @@ cd veticare
 ```
 
 ### Step 2: Install Dependencies
-Install all required Node.js packages (`express`, `cors`, `sqlite3`, `vite`, `concurrently`):
+Install all required Node.js packages:
 ```bash
 npm install
 ```
 
-### Step 3: Run the Application
-Start the Node.js Express API server and the Vite development server concurrently with a single command:
+### Step 3: Configure Environment Variables
+Copy `.env.example` to `.env` and fill in your Supabase credentials:
+```bash
+cp .env.example .env
+```
+In `.env`:
+- `SUPABASE_URL`: Your Supabase Project URL
+- `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase Service Role Key
+- `PORT`: Server port (default: 3000)
+
+### Step 4: Run the Application Locally
+Start the Node.js Express API server and the Vite development server concurrently:
 ```bash
 npm run dev
 ```
+Navigate to **`http://localhost:5173`** in your browser.
 
-Upon launching:
-1. The Express server starts on **`http://localhost:3000`**.
-2. SQLite checks if `veticare.db` exists. If not, it automatically creates the database file, builds the table schemas, and seeds initial demo data.
-3. Vite opens the frontend interface on **`http://localhost:5173`**.
+---
 
-### Step 4: Open in Browser
-Navigate to **`http://localhost:5173`** in your web browser to interact with the application.
+## 🚀 Production Deployment
+
+### Option A: Full-Stack Deployment (Render, Railway, Heroku, Fly.io, etc.)
+1. Build the production frontend:
+   ```bash
+   npm run build
+   ```
+2. Set environment variables in your cloud platform dashboard:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `PORT` (automatically set by most cloud providers)
+3. Start command:
+   ```bash
+   npm start
+   ```
+   The Express server automatically serves the built static frontend from `/dist` and handles single-page routing alongside the `/api` endpoints on the same port and domain.
+
+### Option B: Separate Frontend (Vercel/Netlify) & Backend (Railway/Render)
+1. Deploy the backend with `npm start` and copy its URL (e.g. `https://veticare-api.onrender.com`).
+2. Deploy the frontend repository to Vercel/Netlify with environment variable:
+   - `VITE_API_URL=https://veticare-api.onrender.com/api`
+3. Set `CORS_ORIGIN=https://your-frontend.vercel.app` in your backend environment variables.
 
 ---
 
@@ -174,18 +202,24 @@ The backend exposes the following REST endpoints:
 
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
+| `/api/health` | `GET` | Health check endpoint for cloud monitoring |
 | `/api/owners` | `GET` | Retrieve all owner records |
 | `/api/owners` | `POST` | Create or update an owner profile |
+| `/api/owners/:id` | `DELETE` | Cascade delete owner, their pets, appointments, treatments & invoices |
 | `/api/pets` | `GET` | Retrieve all pet patient records |
 | `/api/pets` | `POST` | Create or update a pet profile |
+| `/api/pets/:id` | `DELETE` | Cascade delete pet, their appointments, treatments & invoices |
 | `/api/appointments` | `GET` | Retrieve all scheduled appointments |
 | `/api/appointments` | `POST` | Book or edit an appointment slot |
 | `/api/appointments/:id/cancel` | `PUT` | Mark appointment as Cancelled |
 | `/api/appointments/:id/complete` | `PUT` | Mark appointment as Completed |
+| `/api/appointments/:id` | `DELETE` | Delete an appointment record |
 | `/api/treatments` | `GET` | Retrieve all clinical treatment logs |
 | `/api/treatments` | `POST` | Record a visit (creates treatment, generates invoice, updates vaccine status) |
+| `/api/treatments/:id` | `DELETE` | Delete a treatment record and its associated invoice |
 | `/api/invoices` | `GET` | Retrieve all invoice transactions |
 | `/api/invoices/:id/pay` | `PUT` | Record payment for an invoice (sets status to Paid) |
+| `/api/invoices/:id` | `DELETE` | Delete an invoice record |
 
 ---
 

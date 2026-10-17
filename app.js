@@ -8,8 +8,24 @@ window.app = window.app || {};
 Object.assign(window.app, {
     // Database Storage wrapper
     db: {
-        // Base API URL
-        apiURL: 'http://localhost:3000/api',
+        // Base API URL - dynamically resolved from env / meta tag / window config / relative path
+        apiURL: (() => {
+            // 1. Explicit global window config (e.g. from runtime script or deployment config)
+            if (typeof window !== 'undefined' && window.VETICARE_API_URL) {
+                return window.VETICARE_API_URL.replace(/\/+$/, '');
+            }
+            // 2. Vite environment variable injected at build/runtime
+            if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) {
+                return import.meta.env.VITE_API_URL.replace(/\/+$/, '');
+            }
+            // 3. HTML meta tag <meta name="api-url" content="...">
+            const metaTag = typeof document !== 'undefined' ? document.querySelector('meta[name="api-url"]') : null;
+            if (metaTag && metaTag.content && !metaTag.content.startsWith('%')) {
+                return metaTag.content.replace(/\/+$/, '');
+            }
+            // 4. Default to relative '/api' which works automatically on any deployed domain/port
+            return '/api';
+        })(),
 
         // Memory cache representing DBMS state
         state: {
