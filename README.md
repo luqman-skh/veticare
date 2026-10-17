@@ -160,7 +160,7 @@ cp .env.example .env
 In `.env`:
 - `SUPABASE_URL`: Your Supabase Project URL
 - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase Service Role Key
-- `PORT`: Server port (default: 3000)
+- `PORT`: Server port
 
 ### Step 4: Run the Application Locally
 Start the Node.js Express API server and the Vite development server concurrently:

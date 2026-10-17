@@ -99,7 +99,7 @@ Exposes CRUD endpoints that perform raw SQL executions on the SQLite database:
 ## Running the Application
 The package scripts are configured using `concurrently` so that starting the app spawns both servers simultaneously:
 ```bash
-# Starts Node API on Port 3000, SQLite DBMS, and Vite UI on Port 5173
+# Starts Node API, SQLite DBMS, and Vite UI on Port 5173
 npm run dev
 ```
 
