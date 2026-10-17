@@ -68,7 +68,7 @@ app.reports = {
         const speciesIcons = { Dog: '🐶', Cat: '🐱', Bird: '🦜', Rabbit: '🐰', Reptile: '🦎', Other: '🐾' };
 
         duePets.forEach(pet => {
-            const owner = owners.find(o => o.id === pet.ownerId) || { name: 'Unknown Owner', phone: '-' };
+            const owner = owners.find(o => o.id === pet.ownerid) || { name: 'Unknown Owner', phone: '-' };
             const icon = speciesIcons[pet.species] || speciesIcons.Other;
             const statusClass = pet.vaccination === 'Partially Vaccinated' ? 'warning' : 'danger';
 
@@ -120,7 +120,7 @@ app.reports = {
         // Aggregate daily paid revenue
         const dailyRevenue = days.map(day => {
             return invoices
-                .filter(inv => inv.status === 'Paid' && inv.dateTime.startsWith(day))
+                .filter(inv => inv.status === 'Paid' && inv.date_time.startsWith(day))
                 .reduce((sum, inv) => sum + Number(inv.total), 0);
         });
 

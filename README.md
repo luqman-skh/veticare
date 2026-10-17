@@ -67,14 +67,14 @@ CREATE TABLE owners (
     phone TEXT NOT NULL,
     email TEXT NOT NULL,
     address TEXT NOT NULL,
-    emergencyContact TEXT,
-    createdAt TEXT NOT NULL
+    emergencycontact TEXT,
+    created_at TEXT NOT NULL
 );
 
 -- 2. Pets Table
 CREATE TABLE pets (
     id TEXT PRIMARY KEY,
-    ownerId TEXT NOT NULL,
+    ownerid TEXT NOT NULL,
     name TEXT NOT NULL,
     species TEXT NOT NULL,
     breed TEXT NOT NULL,
@@ -82,41 +82,41 @@ CREATE TABLE pets (
     weight REAL NOT NULL,
     vaccination TEXT NOT NULL,
     notes TEXT,
-    FOREIGN KEY(ownerId) REFERENCES owners(id) ON DELETE CASCADE
+    FOREIGN KEY(ownerid) REFERENCES owners(id) ON DELETE CASCADE
 );
 
 -- 3. Appointments Table
 CREATE TABLE appointments (
     id TEXT PRIMARY KEY,
-    petId TEXT NOT NULL,
-    vetName TEXT NOT NULL,
-    dateTime TEXT NOT NULL,
+    petid TEXT NOT NULL,
+    vetname TEXT NOT NULL,
+    date_time TEXT NOT NULL,
     reason TEXT NOT NULL,
     status TEXT NOT NULL,
-    FOREIGN KEY(petId) REFERENCES pets(id) ON DELETE CASCADE
+    FOREIGN KEY(petid) REFERENCES pets(id) ON DELETE CASCADE
 );
 
 -- 4. Treatments Table
 CREATE TABLE treatments (
     id TEXT PRIMARY KEY,
     appointmentId TEXT,
-    petId TEXT NOT NULL,
-    dateTime TEXT NOT NULL,
+    petid TEXT NOT NULL,
+    date_time TEXT NOT NULL,
     symptoms TEXT NOT NULL,
     diagnosis TEXT NOT NULL,
     medications TEXT,
     vaccineGiven TEXT,
     cost REAL NOT NULL,
     notes TEXT,
-    FOREIGN KEY(petId) REFERENCES pets(id) ON DELETE CASCADE
+    FOREIGN KEY(petid) REFERENCES pets(id) ON DELETE CASCADE
 );
 
 -- 5. Invoices Table
 CREATE TABLE invoices (
     id TEXT PRIMARY KEY,
     treatmentId TEXT,
-    petId TEXT NOT NULL,
-    dateTime TEXT NOT NULL,
+    petid TEXT NOT NULL,
+    date_time TEXT NOT NULL,
     consultationFee REAL NOT NULL,
     treatmentCost REAL NOT NULL,
     medicineCost REAL NOT NULL,
@@ -125,7 +125,7 @@ CREATE TABLE invoices (
     status TEXT NOT NULL,
     paymentMethod TEXT NOT NULL,
     reason TEXT NOT NULL,
-    FOREIGN KEY(petId) REFERENCES pets(id) ON DELETE CASCADE
+    FOREIGN KEY(petid) REFERENCES pets(id) ON DELETE CASCADE
 );
 ```
 

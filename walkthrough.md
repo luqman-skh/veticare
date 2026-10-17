@@ -19,14 +19,14 @@ CREATE TABLE IF NOT EXISTS owners (
     phone TEXT NOT NULL,
     email TEXT NOT NULL,
     address TEXT NOT NULL,
-    emergencyContact TEXT,
-    createdAt TEXT NOT NULL
+    emergencycontact TEXT,
+    created_at TEXT NOT NULL
 );
 
 -- 2. Pets Table
 CREATE TABLE IF NOT EXISTS pets (
     id TEXT PRIMARY KEY,
-    ownerId TEXT NOT NULL,
+    ownerid TEXT NOT NULL,
     name TEXT NOT NULL,
     species TEXT NOT NULL,
     breed TEXT NOT NULL,
@@ -34,41 +34,41 @@ CREATE TABLE IF NOT EXISTS pets (
     weight REAL NOT NULL,
     vaccination TEXT NOT NULL,
     notes TEXT,
-    FOREIGN KEY(ownerId) REFERENCES owners(id) ON DELETE CASCADE
+    FOREIGN KEY(ownerid) REFERENCES owners(id) ON DELETE CASCADE
 );
 
 -- 3. Appointments Table
 CREATE TABLE IF NOT EXISTS appointments (
     id TEXT PRIMARY KEY,
-    petId TEXT NOT NULL,
-    vetName TEXT NOT NULL,
-    dateTime TEXT NOT NULL,
+    petid TEXT NOT NULL,
+    vetname TEXT NOT NULL,
+    date_time TEXT NOT NULL,
     reason TEXT NOT NULL,
     status TEXT NOT NULL,
-    FOREIGN KEY(petId) REFERENCES pets(id) ON DELETE CASCADE
+    FOREIGN KEY(petid) REFERENCES pets(id) ON DELETE CASCADE
 );
 
 -- 4. Treatments Table (Visits log)
 CREATE TABLE IF NOT EXISTS treatments (
     id TEXT PRIMARY KEY,
     appointmentId TEXT,
-    petId TEXT NOT NULL,
-    dateTime TEXT NOT NULL,
+    petid TEXT NOT NULL,
+    date_time TEXT NOT NULL,
     symptoms TEXT NOT NULL,
     diagnosis TEXT NOT NULL,
     medications TEXT,
     vaccineGiven TEXT,
     cost REAL NOT NULL,
     notes TEXT,
-    FOREIGN KEY(petId) REFERENCES pets(id) ON DELETE CASCADE
+    FOREIGN KEY(petid) REFERENCES pets(id) ON DELETE CASCADE
 );
 
 -- 5. Invoices Table (Transactions)
 CREATE TABLE IF NOT EXISTS invoices (
     id TEXT PRIMARY KEY,
     treatmentId TEXT,
-    petId TEXT NOT NULL,
-    dateTime TEXT NOT NULL,
+    petid TEXT NOT NULL,
+    date_time TEXT NOT NULL,
     consultationFee REAL NOT NULL,
     treatmentCost REAL NOT NULL,
     medicineCost REAL NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS invoices (
     status TEXT NOT NULL,
     paymentMethod TEXT NOT NULL,
     reason TEXT NOT NULL,
-    FOREIGN KEY(petId) REFERENCES pets(id) ON DELETE CASCADE
+    FOREIGN KEY(petid) REFERENCES pets(id) ON DELETE CASCADE
 );
 ```
 
@@ -110,7 +110,7 @@ npm run dev
 We verified the complete relational flow using browser subagents, validating that data is saved and persisted inside `veticare.db` across runs:
 1. **Owner Registration**: Added owner **Marcus Aurelius**. His contact and billing details were saved into SQLite.
 2. **Pet Patient Listing**: Registered **Shadow** (a Belgian Malinois dog) under Marcus's profile, verifying DOB calculations.
-3. **Scheduler & Collision checks**: Booked Shadow for Dr. Jenkins today at 11:30 AM.
+3. **Scheduler & Collision checks**: Booked Shadow for Dr. A. R. Shaikh today at 11:30 AM.
 4. **Treatment Transaction**: Marked the appointment complete and filled Shadow's treatment record (cost $70.00, Rabies Vaccine shot).
 5. **Invoicing & Payments**: Located the generated invoice `INV-7300` ($156.60 total) in the Billing ledger. Recorded payment (updated status to "Paid" via SQL).
 6. **Vaccination Syncing**: Verified Shadow's pet profile status automatically updated to "Up-to-date".

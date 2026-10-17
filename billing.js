@@ -26,8 +26,8 @@ app.billing = {
         if (searchQuery.trim() !== '') {
             const query = searchQuery.toLowerCase();
             invoices = invoices.filter(inv => {
-                const pet = pets.find(p => p.id === inv.petId) || { name: '' };
-                const owner = owners.find(o => o.id === pet.ownerId) || { name: '' };
+                const pet = pets.find(p => p.id === inv.petid) || { name: '' };
+                const owner = owners.find(o => o.id === pet.ownerid) || { name: '' };
                 
                 return inv.id.toLowerCase().includes(query) ||
                        inv.reason.toLowerCase().includes(query) ||
@@ -37,7 +37,7 @@ app.billing = {
         }
 
         // Sort chronologically descending
-        invoices.sort((a, b) => b.dateTime.localeCompare(a.dateTime));
+        invoices.sort((a, b) => b.date_time.localeCompare(a.date_time));
 
         if (invoices.length === 0) {
             listContainer.innerHTML = '<tr><td colspan="7" class="empty-state" style="padding: 32px; text-align: center; color: var(--text-muted);">No invoices found matching criteria.</td></tr>';
@@ -45,9 +45,9 @@ app.billing = {
         }
 
         invoices.forEach(inv => {
-            const pet = pets.find(p => p.id === inv.petId) || { name: 'Unknown Patient', ownerId: '' };
-            const owner = owners.find(o => o.id === pet.ownerId) || { name: 'Unknown Owner' };
-            const date = new Date(inv.dateTime);
+            const pet = pets.find(p => p.id === inv.petid) || { name: 'Unknown Patient', ownerid: '' };
+            const owner = owners.find(o => o.id === pet.ownerid) || { name: 'Unknown Owner' };
+            const date = new Date(inv.date_time);
 
             const statusClass = inv.status.toLowerCase(); // 'paid' or 'pending'
 
@@ -71,7 +71,7 @@ app.billing = {
                     </span>
                 </td>
                 <td style="padding: 16px; text-align: right;">
-                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
                         <button class="secondary-btn btn-sm" onclick="app.ui.openInvoiceModal(${JSON.stringify(inv).replace(/"/g, '&quot;')})">
                             Receipt
                         </button>
@@ -80,6 +80,10 @@ app.billing = {
                                 Pay
                             </button>` : ''
                         }
+                        <button class="secondary-btn btn-sm btn-danger" onclick="app.billing.delete('${inv.id}')" title="Delete Invoice">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                            Delete
+                        </button>
                     </div>
                 </td>
             `;
@@ -110,6 +114,34 @@ app.billing = {
         } catch (err) {
             console.error('Error recording invoice payment:', err);
             alert('Could not record payment.');
+        }
+    },
+
+    // Delete invoice
+    delete: async (invoiceId) => {
+        if (!confirm(`Are you sure you want to delete invoice ${invoiceId}?`)) return;
+        try {
+            const res = await fetch(`${app.db.apiURL}/invoices/${invoiceId}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to delete invoice');
+            }
+
+            await app.db.loadState();
+            app.ui.closeAllModals();
+
+            if (app.router.activeView === 'billing') {
+                app.billing.renderList();
+            } else if (app.router.activeView === 'reports') {
+                app.reports.render();
+            } else if (app.router.activeView === 'dashboard') {
+                app.dashboard.render();
+            }
+        } catch (err) {
+            console.error('Error deleting invoice:', err);
+            alert('Could not delete invoice: ' + err.message);
         }
     }
 };

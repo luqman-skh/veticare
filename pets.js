@@ -50,7 +50,7 @@ app.pets = {
         // Apply text search filtering
         if (searchQuery.trim() !== '') {
             pets = pets.filter(pet => {
-                const owner = owners.find(o => o.id === pet.ownerId) || { name: '' };
+                const owner = owners.find(o => o.id === pet.ownerid) || { name: '' };
                 return pet.name.toLowerCase().includes(searchQuery) ||
                        pet.breed.toLowerCase().includes(searchQuery) ||
                        pet.species.toLowerCase().includes(searchQuery) ||
@@ -83,7 +83,7 @@ app.pets = {
             card.className = 'pet-card';
             card.onclick = () => window.location.hash = `pet-details/${pet.id}`;
 
-            const owner = owners.find(o => o.id === pet.ownerId) || { name: 'Unknown Owner' };
+            const owner = owners.find(o => o.id === pet.ownerid) || { name: 'Unknown Owner' };
             const ageStr = app.pets.calculateAge(pet.dob);
             const icon = speciesIcons[pet.species] || speciesIcons.Other;
             
@@ -118,7 +118,13 @@ app.pets = {
                         <span class="indicator-dot ${dotColor}"></span>
                         ${pet.vaccination}
                     </span>
-                    <span class="text-btn">Details &rarr;</span>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="secondary-btn btn-sm btn-danger" onclick="event.stopPropagation(); app.pets.delete('${pet.id}', '${pet.name.replace(/'/g, "\\'")}')" title="Delete Patient">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                            Delete
+                        </button>
+                        <span class="text-btn">Details &rarr;</span>
+                    </div>
                 </div>
             `;
             grid.appendChild(card);
@@ -126,9 +132,9 @@ app.pets = {
     },
 
     // Show detailed profile for a single pet
-    showDetail: (petId) => {
+    showDetail: (petid) => {
         const pets = app.db.get('pets') || [];
-        const pet = pets.find(p => p.id === petId);
+        const pet = pets.find(p => p.id === petid);
         
         if (!pet) {
             alert('Pet profile not found!');
@@ -137,7 +143,7 @@ app.pets = {
         }
 
         const owners = app.db.get('owners') || [];
-        const owner = owners.find(o => o.id === pet.ownerId) || { name: 'Unknown Owner', id: '' };
+        const owner = owners.find(o => o.id === pet.ownerid) || { name: 'Unknown Owner', id: '' };
 
         // Switch panel visibility
         app.router.activeView = 'pet-details';
@@ -172,7 +178,7 @@ app.pets = {
 
         // Render treatment records
         const treatments = app.db.get('treatments') || [];
-        const petTreatments = treatments.filter(t => t.petId === petId);
+        const petTreatments = treatments.filter(t => t.petid === petid);
         const treatmentContainer = document.getElementById('pd-treatments');
         treatmentContainer.innerHTML = '';
 
@@ -180,14 +186,19 @@ app.pets = {
             treatmentContainer.innerHTML = '<div class="empty-state">No treatment records found for this patient.</div>';
         } else {
             // Sort by date descending
-            petTreatments.sort((a, b) => b.dateTime.localeCompare(a.dateTime));
+            petTreatments.sort((a, b) => b.date_time.localeCompare(a.date_time));
             petTreatments.forEach(t => {
                 const card = document.createElement('div');
                 card.className = 'treatment-history-card';
                 card.innerHTML = `
                     <div class="treatment-header">
                         <span class="treatment-diag">${t.diagnosis}</span>
-                        <span class="treatment-date">${new Date(t.dateTime).toLocaleDateString()}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="treatment-date">${new Date(t.date_time).toLocaleDateString()}</span>
+                            <button class="icon-btn-danger" style="width: 24px; height: 24px;" onclick="app.treatments.delete('${t.id}', '${pet.id}')" title="Delete Treatment">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="treatment-details">
                         <p><strong>Symptoms:</strong> ${t.symptoms}</p>
@@ -235,7 +246,7 @@ app.pets = {
                         <p>Prescribed: ${vt.medications}</p>
                     </div>
                     <span class="badge" style="background-color: var(--color-success-soft); color: var(--color-success)">
-                        ${new Date(vt.dateTime).toLocaleDateString()}
+                        ${new Date(vt.date_time).toLocaleDateString()}
                     </span>
                 `;
                 vaccContainer.appendChild(row);
@@ -244,22 +255,59 @@ app.pets = {
 
         // Hook up detail page actions
         document.getElementById('pet-detail-back').onclick = () => window.location.hash = 'pets';
+        
+        const deletePetBtn = document.getElementById('btn-delete-pet');
+        if (deletePetBtn) {
+            deletePetBtn.onclick = () => {
+                app.pets.delete(pet.id, pet.name, owner.id);
+            };
+        }
+
         document.getElementById('btn-edit-pet').onclick = () => app.ui.openPetModal(pet);
         
-        // Modal hooks for upcoming modules (Phase 2 hooks will log/alert for now or show appropriate message)
         document.getElementById('btn-add-appointment').onclick = () => {
-            alert('Appointment Scheduling module will be fully implemented in Phase 2.');
+            app.ui.openAppointmentModal(null, null);
+            document.getElementById('appt-pet').value = pet.id;
         };
         document.getElementById('btn-add-treatment').onclick = () => {
-            alert('Treatment log entry module will be fully implemented in Phase 2.');
+            app.ui.openTreatmentModal(null, pet.id);
         };
+    },
+
+    // Delete pet and all related appointments, treatments, invoices
+    delete: async (petId, petName = 'this patient', redirectOwnerId = null) => {
+        const confirmMsg = `Are you sure you want to delete ${petName}?\n\nWARNING: Deleting this patient will also permanently delete all their appointments, medical treatments, and billing records!`;
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const res = await fetch(`${app.db.apiURL}/pets/${petId}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to delete pet');
+            }
+
+            await app.db.loadState();
+
+            if (app.router.activeView === 'pet-details') {
+                window.location.hash = redirectOwnerId ? `owner-details/${redirectOwnerId}` : 'pets';
+            } else if (app.router.activeView === 'owner-details' && redirectOwnerId) {
+                app.owners.showDetail(redirectOwnerId);
+            } else {
+                app.pets.renderList();
+            }
+        } catch (err) {
+            console.error('Error deleting pet:', err);
+            alert('Could not delete patient: ' + err.message);
+        }
     },
 
     // Save a new or edited pet
     save: async () => {
         const id = document.getElementById('pet-id').value;
         const name = document.getElementById('pet-name').value.trim();
-        const ownerId = document.getElementById('pet-owner').value;
+        const ownerid = document.getElementById('pet-owner').value;
         const species = document.getElementById('pet-species').value;
         const breed = document.getElementById('pet-breed').value.trim();
         const dob = document.getElementById('pet-dob').value;
@@ -267,14 +315,14 @@ app.pets = {
         const vaccination = document.getElementById('pet-vaccination').value;
         const notes = document.getElementById('pet-notes').value.trim();
 
-        if (!name || !ownerId || !breed || !dob || isNaN(weight)) {
+        if (!name || !ownerid || !breed || !dob || isNaN(weight)) {
             alert('Please fill out all required fields.');
             return;
         }
 
         const payload = {
             id: id || undefined,
-            ownerId,
+            ownerid,
             name,
             species,
             breed,
@@ -302,7 +350,7 @@ app.pets = {
             if (app.router.activeView === 'pet-details') {
                 app.pets.showDetail(activeId);
             } else if (app.router.activeView === 'owner-details') {
-                app.owners.showDetail(ownerId);
+                app.owners.showDetail(ownerid);
             } else {
                 app.pets.renderList();
             }

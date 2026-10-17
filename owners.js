@@ -25,7 +25,7 @@ app.owners = {
         }
 
         // Helper to count pets
-        const getPetCount = (ownerId) => pets.filter(p => p.ownerId === ownerId).length;
+        const getPetCount = (ownerid) => pets.filter(p => p.ownerid === ownerid).length;
 
         // Sorting
         if (sortVal === 'name-asc') {
@@ -35,7 +35,7 @@ app.owners = {
         } else if (sortVal === 'pets-desc') {
             owners.sort((a, b) => getPetCount(b.id) - getPetCount(a.id));
         } else if (sortVal === 'recent') {
-            owners.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+            owners.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
         }
 
         grid.innerHTML = '';
@@ -60,7 +60,7 @@ app.owners = {
                     <div class="owner-avatar-circle">${initials}</div>
                     <div class="owner-title">
                         <h4>${owner.name}</h4>
-                        <span>Registered ${new Date(owner.createdAt).toLocaleDateString()}</span>
+                        <span>Registered ${new Date(owner.created_at).toLocaleDateString()}</span>
                     </div>
                 </div>
                 <div class="owner-card-details">
@@ -75,7 +75,13 @@ app.owners = {
                 </div>
                 <div class="owner-card-footer">
                     <span class="pet-count-tag">${petCount} ${petCount === 1 ? 'Pet' : 'Pets'}</span>
-                    <span class="text-btn">View Profile &rarr;</span>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="secondary-btn btn-sm btn-danger" onclick="event.stopPropagation(); app.owners.delete('${owner.id}', '${owner.name.replace(/'/g, "\\'")}')" title="Delete Owner">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                            Delete
+                        </button>
+                        <span class="text-btn">View Profile &rarr;</span>
+                    </div>
                 </div>
             `;
             grid.appendChild(card);
@@ -83,9 +89,9 @@ app.owners = {
     },
 
     // Show detailed profile for a single owner
-    showDetail: (ownerId) => {
+    showDetail: (ownerid) => {
         const owners = app.db.get('owners') || [];
-        const owner = owners.find(o => o.id === ownerId);
+        const owner = owners.find(o => o.id === ownerid);
         
         if (!owner) {
             alert('Owner not found!');
@@ -105,15 +111,15 @@ app.owners = {
         document.getElementById('od-phone').textContent = owner.phone;
         document.getElementById('od-email').textContent = owner.email;
         document.getElementById('od-address').textContent = owner.address || 'Not Provided';
-        document.getElementById('od-emergency').textContent = owner.emergencyContact || 'Not Provided';
-        document.getElementById('od-date').textContent = new Date(owner.createdAt).toLocaleDateString();
+        document.getElementById('od-emergency').textContent = owner.emergencycontact || 'Not Provided';
+        document.getElementById('od-date').textContent = new Date(owner.created_at).toLocaleDateString();
         
         const initials = owner.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
         document.getElementById('od-avatar').textContent = initials;
 
         // Render associated pets
         const pets = app.db.get('pets') || [];
-        const ownerPets = pets.filter(p => p.ownerId === ownerId);
+        const ownerPets = pets.filter(p => p.ownerid === ownerid);
         const petsListContainer = document.getElementById('od-pets-list');
         petsListContainer.innerHTML = '';
 
@@ -131,10 +137,13 @@ app.owners = {
                 
                 item.innerHTML = `
                     <div class="owner-pet-icon">${icon}</div>
-                    <div class="owner-pet-meta">
+                    <div class="owner-pet-meta" style="flex-grow: 1;">
                         <h5>${pet.name}</h5>
                         <p>${pet.breed} • ${pet.weight} kg</p>
                     </div>
+                    <button class="icon-btn-danger" onclick="event.stopPropagation(); app.pets.delete('${pet.id}', '${pet.name.replace(/'/g, "\\'")}', '${owner.id}')" title="Delete Pet">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </button>
                 `;
                 petsListContainer.appendChild(item);
             });
@@ -145,6 +154,13 @@ app.owners = {
             window.location.hash = 'owners';
         };
 
+        const deleteOwnerBtn = document.getElementById('btn-delete-owner');
+        if (deleteOwnerBtn) {
+            deleteOwnerBtn.onclick = () => {
+                app.owners.delete(owner.id, owner.name);
+            };
+        }
+
         document.getElementById('btn-edit-owner').onclick = () => {
             app.ui.openOwnerModal(owner);
         };
@@ -154,6 +170,33 @@ app.owners = {
         };
     },
 
+    // Delete owner and cascade to all associated records
+    delete: async (ownerId, ownerName = 'this owner') => {
+        const confirmMsg = `Are you sure you want to delete ${ownerName}?\n\nWARNING: Deleting this owner will also permanently delete all associated pets, appointments, clinical treatments, and invoices!`;
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const res = await fetch(`${app.db.apiURL}/owners/${ownerId}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to delete owner');
+            }
+
+            await app.db.loadState();
+
+            if (app.router.activeView === 'owner-details') {
+                window.location.hash = 'owners';
+            } else {
+                app.owners.renderList();
+            }
+        } catch (err) {
+            console.error('Error deleting owner:', err);
+            alert('Could not delete owner: ' + err.message);
+        }
+    },
+
     // Save a new or edited owner
     save: async () => {
         const id = document.getElementById('owner-id').value;
@@ -161,7 +204,7 @@ app.owners = {
         const phone = document.getElementById('owner-phone').value.trim();
         const email = document.getElementById('owner-email').value.trim();
         const address = document.getElementById('owner-address').value.trim();
-        const emergencyContact = document.getElementById('owner-emergency').value.trim();
+        const emergencycontact = document.getElementById('owner-emergency').value.trim();
 
         if (!name || !phone || !email) {
             alert('Please fill out all required fields.');
@@ -174,7 +217,7 @@ app.owners = {
             phone,
             email,
             address,
-            emergencyContact
+            emergencycontact
         };
 
         try {

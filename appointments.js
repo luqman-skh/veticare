@@ -133,7 +133,7 @@ app.appointments = {
             }
 
             // Check if day has active/scheduled appointments
-            const hasEvents = appointments.some(appt => appt.dateTime.startsWith(dateStr) && appt.status !== 'Cancelled');
+            const hasEvents = appointments.some(appt => appt.date_time.startsWith(dateStr) && appt.status !== 'Cancelled');
             if (hasEvents) {
                 dayButton.classList.add('has-events');
             }
@@ -168,15 +168,15 @@ app.appointments = {
         const selectedVetFilter = document.getElementById('scheduler-vet-select').value;
 
         // Filter appointments matching selected date
-        let dayAppts = appointments.filter(appt => appt.dateTime.startsWith(app.appointments.selectedDateStr));
+        let dayAppts = appointments.filter(appt => appt.date_time.startsWith(app.appointments.selectedDateStr));
 
         // Apply veterinarian filter
         if (selectedVetFilter !== 'all') {
-            dayAppts = dayAppts.filter(appt => appt.vetName === selectedVetFilter);
+            dayAppts = dayAppts.filter(appt => appt.vetname === selectedVetFilter);
         }
 
         // Sort by time slot
-        dayAppts.sort((a, b) => a.dateTime.localeCompare(b.dateTime));
+        dayAppts.sort((a, b) => a.date_time.localeCompare(b.date_time));
 
         agendaSubtitle.textContent = `${dayAppts.length} ${dayAppts.length === 1 ? 'appointment' : 'appointments'} scheduled`;
 
@@ -186,9 +186,9 @@ app.appointments = {
         }
 
         dayAppts.forEach(appt => {
-            const pet = pets.find(p => p.id === appt.petId) || { name: 'Unknown Pet', species: 'Other', breed: 'Unknown' };
-            const owner = owners.find(o => o.id === pet.ownerId) || { name: 'Unknown Owner' };
-            const time = appt.dateTime.split('T')[1];
+            const pet = pets.find(p => p.id === appt.petid) || { name: 'Unknown Pet', species: 'Other', breed: 'Unknown' };
+            const owner = owners.find(o => o.id === pet.ownerid) || { name: 'Unknown Owner' };
+            const time = appt.date_time.split('T')[1];
 
             // Hour styling
             const [hour, min] = time.split(':');
@@ -206,12 +206,20 @@ app.appointments = {
                 actionsHTML = `
                     <div class="agenda-actions">
                         <button class="secondary-btn btn-sm" onclick="app.appointments.changeStatus('${appt.id}', 'Cancelled')" style="color: var(--color-danger); border-color: var(--color-danger-soft);">Cancel</button>
-                        <button class="primary-btn btn-sm" onclick="app.appointments.completeAppointment('${appt.id}', '${appt.petId}')">Complete</button>
+                        <button class="primary-btn btn-sm" onclick="app.appointments.completeAppointment('${appt.id}', '${appt.petid}')">Complete</button>
+                        <button class="secondary-btn btn-sm btn-danger" onclick="app.appointments.delete('${appt.id}')" title="Delete Appointment">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
                     </div>
                 `;
             } else {
                 actionsHTML = `
-                    <span class="status-badge ${appt.status.toLowerCase()}">${appt.status}</span>
+                    <div class="agenda-actions" style="display: flex; align-items: center; gap: 8px;">
+                        <span class="status-badge ${appt.status.toLowerCase()}">${appt.status}</span>
+                        <button class="secondary-btn btn-sm btn-danger" onclick="app.appointments.delete('${appt.id}')" title="Delete Appointment">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </div>
                 `;
             }
 
@@ -225,7 +233,7 @@ app.appointments = {
                         <span style="cursor:pointer;" onclick="window.location.hash='pet-details/${pet.id}'">${pet.name}</span>
                         <span class="badge" style="font-size: 10px; padding: 2px 6px;">${pet.species}</span>
                     </div>
-                    <div class="agenda-vet-text">Vet: <strong>${appt.vetName}</strong> • Owner: ${owner.name}</div>
+                    <div class="agenda-vet-text">Vet: <strong>${appt.vetname}</strong> • Owner: ${owner.name}</div>
                     <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Reason: <em>${appt.reason}</em></div>
                 </div>
                 ${actionsHTML}
@@ -236,13 +244,13 @@ app.appointments = {
 
     // Collision check logic: Checks if a veterinarian already has an active appointment in the target date/time
     // We treat slots as 30 minute blocks, so checking matching date, time, and veterinarian name is correct
-    checkCollision: (vetName, dateStr, timeStr, apptIdToIgnore = null) => {
+    checkCollision: (vetname, dateStr, timeStr, apptIdToIgnore = null) => {
         const appointments = app.db.get('appointments') || [];
-        const targetDateTime = `${dateStr}T${timeStr}`;
+        const targetdate_time = `${dateStr}T${timeStr}`;
 
         return appointments.some(appt => 
-            appt.vetName === vetName &&
-            appt.dateTime === targetDateTime &&
+            appt.vetname === vetname &&
+            appt.date_time === targetdate_time &&
             appt.status === 'Scheduled' &&
             appt.id !== apptIdToIgnore
         );
@@ -251,31 +259,31 @@ app.appointments = {
     // Save scheduled appointment slot
     save: async () => {
         const id = document.getElementById('appointment-id').value;
-        const petId = document.getElementById('appt-pet').value;
-        const vetName = document.getElementById('appt-vet').value;
+        const petid = document.getElementById('appt-pet').value;
+        const vetname = document.getElementById('appt-vet').value;
         const date = document.getElementById('appt-date').value;
         const time = document.getElementById('appt-time').value;
         const reason = document.getElementById('appt-reason').value;
 
-        if (!petId || !vetName || !date || !time || !reason) {
+        if (!petid || !vetname || !date || !time || !reason) {
             alert('Please fill out all required fields.');
             return;
         }
 
         // Perform final double-booking check
-        const isColliding = app.appointments.checkCollision(vetName, date, time, id);
+        const isColliding = app.appointments.checkCollision(vetname, date, time, id);
         if (isColliding) {
             document.getElementById('appointment-collision-alert').style.display = 'block';
             return;
         }
 
-        const targetDateTime = `${date}T${time}`;
+        const targetdate_time = `${date}T${time}`;
 
         const payload = {
             id: id || undefined,
-            petId,
-            vetName,
-            dateTime: targetDateTime,
+            petid,
+            vetname,
+            date_time: targetdate_time,
             reason,
             status: id ? undefined : 'Scheduled' // backend updates existing status or sets to Scheduled if new
         };
@@ -329,10 +337,34 @@ app.appointments = {
     },
 
     // Complete appointment - marks Completed and opens Treatment Modal
-    completeAppointment: async (apptId, petId) => {
+    completeAppointment: async (apptId, petid) => {
         await app.appointments.changeStatus(apptId, 'Completed');
         
         // Automatically launch Record Visit modal, passing pet ID and appointment reference
-        app.ui.openTreatmentModal(null, petId, apptId);
+        app.ui.openTreatmentModal(null, petid, apptId);
+    },
+
+    // Delete appointment
+    delete: async (apptId) => {
+        if (!confirm('Are you sure you want to delete this appointment?')) return;
+        try {
+            const res = await fetch(`${app.db.apiURL}/appointments/${apptId}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to delete appointment');
+            }
+
+            await app.db.loadState();
+            app.appointments.renderCalendar();
+            app.appointments.renderAgenda();
+            if (app.router.activeView === 'dashboard') {
+                app.dashboard.render();
+            }
+        } catch (err) {
+            console.error('Error deleting appointment:', err);
+            alert('Could not delete appointment: ' + err.message);
+        }
     }
 };

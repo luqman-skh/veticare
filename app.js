@@ -173,14 +173,14 @@ Object.assign(window.app, {
 
             // Stats computations
             const todayStr = new Date().toISOString().split('T')[0];
-            const todayAppointments = appointments.filter(a => a.dateTime.startsWith(todayStr));
+            const todayAppointments = appointments.filter(a => a.date_time.startsWith(todayStr));
             
             // Calculate today's revenue (from treatments recorded today, plus general consultation fee $50 for finished appointments)
-            const completedToday = appointments.filter(a => a.dateTime.startsWith(todayStr) && a.status === 'Completed');
+            const completedToday = appointments.filter(a => a.date_time.startsWith(todayStr) && a.status === 'Completed');
             let todayRevenue = completedToday.length * 50; // base fee
             
             treatments.forEach(t => {
-                if (t.dateTime.startsWith(todayStr)) {
+                if (t.date_time.startsWith(todayStr)) {
                     todayRevenue += Number(t.cost || 0);
                 }
             });
@@ -200,12 +200,12 @@ Object.assign(window.app, {
                 scheduleContainer.innerHTML = '<div class="empty-state">No appointments scheduled for today.</div>';
             } else {
                 // Sort by time
-                todayAppointments.sort((a, b) => a.dateTime.localeCompare(b.dateTime));
+                todayAppointments.sort((a, b) => a.date_time.localeCompare(b.date_time));
                 
                 todayAppointments.forEach(apt => {
-                    const pet = pets.find(p => p.id === apt.petId) || { name: 'Unknown Patient' };
-                    const owner = owners.find(o => o.id === pet.ownerId) || { name: 'Unknown Owner' };
-                    const time = apt.dateTime.split('T')[1];
+                    const pet = pets.find(p => p.id === apt.petid) || { name: 'Unknown Patient' };
+                    const owner = owners.find(o => o.id === pet.ownerid) || { name: 'Unknown Owner' };
+                    const time = apt.date_time.split('T')[1];
                     
                     const item = document.createElement('div');
                     item.className = 'schedule-item';
@@ -407,10 +407,10 @@ Object.assign(window.app, {
             if (apptData) {
                 title.textContent = 'Edit Consultation Slot';
                 document.getElementById('appointment-id').value = apptData.id;
-                document.getElementById('appt-pet').value = apptData.petId;
-                document.getElementById('appt-vet').value = apptData.vetName;
-                document.getElementById('appt-date').value = apptData.dateTime.split('T')[0];
-                document.getElementById('appt-time').value = apptData.dateTime.split('T')[1];
+                document.getElementById('appt-pet').value = apptData.petid;
+                document.getElementById('appt-vet').value = apptData.vetname;
+                document.getElementById('appt-date').value = apptData.date_time.split('T')[0];
+                document.getElementById('appt-time').value = apptData.date_time.split('T')[1];
                 document.getElementById('appt-reason').value = apptData.reason;
             } else {
                 title.textContent = 'Book Consultation Slot';
@@ -438,8 +438,8 @@ Object.assign(window.app, {
                 title.textContent = 'Edit Treatment Record';
                 document.getElementById('treatment-id').value = treatmentData.id;
                 document.getElementById('treatment-appt-id').value = treatmentData.appointmentId || '';
-                document.getElementById('treatment-pet').value = treatmentData.petId;
-                document.getElementById('treatment-date').value = treatmentData.dateTime;
+                document.getElementById('treatment-pet').value = treatmentData.petid;
+                document.getElementById('treatment-date').value = treatmentData.date_time;
                 document.getElementById('treatment-symptoms').value = treatmentData.symptoms;
                 document.getElementById('treatment-diagnosis').value = treatmentData.diagnosis;
                 document.getElementById('treatment-meds').value = treatmentData.medications || '';
@@ -479,7 +479,7 @@ Object.assign(window.app, {
                 document.getElementById('owner-phone').value = ownerData.phone;
                 document.getElementById('owner-email').value = ownerData.email;
                 document.getElementById('owner-address').value = ownerData.address || '';
-                document.getElementById('owner-emergency').value = ownerData.emergencyContact || '';
+                document.getElementById('owner-emergency').value = ownerData.emergencycontact || '';
             } else {
                 title.textContent = 'Register New Owner';
             }
@@ -505,7 +505,7 @@ Object.assign(window.app, {
                 title.textContent = 'Edit Patient Profile';
                 document.getElementById('pet-id').value = petData.id;
                 document.getElementById('pet-name').value = petData.name;
-                document.getElementById('pet-owner').value = petData.ownerId;
+                document.getElementById('pet-owner').value = petData.ownerid;
                 document.getElementById('pet-species').value = petData.species;
                 document.getElementById('pet-breed').value = petData.breed;
                 document.getElementById('pet-dob').value = petData.dob;
@@ -530,12 +530,12 @@ Object.assign(window.app, {
             const pets = app.db.get('pets') || [];
             const owners = app.db.get('owners') || [];
 
-            const pet = pets.find(p => p.id === invoice.petId) || { name: 'Unknown Pet', species: 'Other', breed: 'Unknown', ownerId: '' };
-            const owner = owners.find(o => o.id === pet.ownerId) || { name: 'Unknown Owner', email: '-', phone: '-' };
+            const pet = pets.find(p => p.id === invoice.petid) || { name: 'Unknown Pet', species: 'Other', breed: 'Unknown', ownerid: '' };
+            const owner = owners.find(o => o.id === pet.ownerid) || { name: 'Unknown Owner', email: '-', phone: '-' };
 
             // Populate text elements
             document.getElementById('inv-id').textContent = invoice.id;
-            document.getElementById('inv-date').textContent = new Date(invoice.dateTime).toLocaleString();
+            document.getElementById('inv-date').textContent = new Date(invoice.date_time).toLocaleString();
             document.getElementById('inv-owner-name').textContent = owner.name;
             document.getElementById('inv-owner-email').textContent = owner.email;
             document.getElementById('inv-owner-phone').textContent = owner.phone;
@@ -584,6 +584,13 @@ Object.assign(window.app, {
                 payBtn.style.display = 'inline-flex';
                 payBtn.onclick = () => {
                     app.billing.pay(invoice.id);
+                };
+            }
+
+            const delBtn = document.getElementById('delete-invoice-modal-btn');
+            if (delBtn) {
+                delBtn.onclick = () => {
+                    app.billing.delete(invoice.id);
                 };
             }
 

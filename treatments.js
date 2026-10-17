@@ -20,8 +20,8 @@ app.treatments = {
         if (searchQuery.trim() !== '') {
             const query = searchQuery.toLowerCase();
             treatments = treatments.filter(t => {
-                const pet = pets.find(p => p.id === t.petId) || { name: '' };
-                const owner = owners.find(o => o.id === pet.ownerId) || { name: '' };
+                const pet = pets.find(p => p.id === t.petid) || { name: '' };
+                const owner = owners.find(o => o.id === pet.ownerid) || { name: '' };
                 
                 return t.diagnosis.toLowerCase().includes(query) ||
                        t.symptoms.toLowerCase().includes(query) ||
@@ -32,7 +32,7 @@ app.treatments = {
         }
 
         // Sort by date descending
-        treatments.sort((a, b) => b.dateTime.localeCompare(a.dateTime));
+        treatments.sort((a, b) => b.date_time.localeCompare(a.date_time));
 
         if (treatments.length === 0) {
             logsContainer.innerHTML = '<div class="empty-state">No clinical treatment records found.</div>';
@@ -42,9 +42,9 @@ app.treatments = {
         const speciesIcons = { Dog: '🐶', Cat: '🐱', Bird: '🦜', Rabbit: '🐰', Reptile: '🦎', Other: '🐾' };
 
         treatments.forEach(t => {
-            const pet = pets.find(p => p.id === t.petId) || { name: 'Unknown Patient', species: 'Other', ownerId: '' };
-            const owner = owners.find(o => o.id === pet.ownerId) || { name: 'Unknown Owner' };
-            const date = new Date(t.dateTime);
+            const pet = pets.find(p => p.id === t.petid) || { name: 'Unknown Patient', species: 'Other', ownerid: '' };
+            const owner = owners.find(o => o.id === pet.ownerid) || { name: 'Unknown Owner' };
+            const date = new Date(t.date_time);
             const icon = speciesIcons[pet.species] || speciesIcons.Other;
 
             const card = document.createElement('div');
@@ -82,7 +82,13 @@ app.treatments = {
                 
                 <div class="clinical-billing-block">
                     <span class="clinical-cost">$${Number(t.cost).toFixed(2)}</span>
-                    <button class="secondary-btn btn-sm" onclick="app.ui.openTreatmentModal(${JSON.stringify(t).replace(/"/g, '&quot;')})">Edit</button>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <button class="secondary-btn btn-sm" onclick="app.ui.openTreatmentModal(${JSON.stringify(t).replace(/"/g, '&quot;')})">Edit</button>
+                        <button class="secondary-btn btn-sm btn-danger" onclick="app.treatments.delete('${t.id}', '${t.petid}')" title="Delete Treatment">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                            Delete
+                        </button>
+                    </div>
                 </div>
             `;
             logsContainer.appendChild(card);
@@ -93,8 +99,8 @@ app.treatments = {
     save: async () => {
         const id = document.getElementById('treatment-id').value;
         const apptId = document.getElementById('treatment-appt-id').value;
-        const petId = document.getElementById('treatment-pet').value;
-        const dateTime = document.getElementById('treatment-date').value;
+        const petid = document.getElementById('treatment-pet').value;
+        const date_time = document.getElementById('treatment-date').value;
         const symptoms = document.getElementById('treatment-symptoms').value.trim();
         const diagnosis = document.getElementById('treatment-diagnosis').value.trim();
         const medications = document.getElementById('treatment-meds').value.trim();
@@ -102,7 +108,7 @@ app.treatments = {
         const cost = parseFloat(document.getElementById('treatment-cost').value);
         const notes = document.getElementById('treatment-notes').value.trim();
 
-        if (!petId || !dateTime || !symptoms || !diagnosis || isNaN(cost)) {
+        if (!petid || !date_time || !symptoms || !diagnosis || isNaN(cost)) {
             alert('Please fill out all required fields.');
             return;
         }
@@ -110,8 +116,8 @@ app.treatments = {
         const payload = {
             id: id || undefined,
             appointmentId: apptId || undefined,
-            petId,
-            dateTime,
+            petid,
+            date_time,
             symptoms,
             diagnosis,
             medications: medications || undefined,
@@ -134,7 +140,7 @@ app.treatments = {
 
             // Refresh views depending on where we are
             if (app.router.activeView === 'pet-details') {
-                app.pets.showDetail(petId);
+                app.pets.showDetail(petid);
             } else if (app.router.activeView === 'treatments') {
                 app.treatments.renderList();
             } else if (app.router.activeView === 'dashboard') {
@@ -145,6 +151,35 @@ app.treatments = {
         } catch (err) {
             console.error('Error saving clinical treatment:', err);
             alert('Could not save treatment record.');
+        }
+    },
+
+    // Delete treatment record and cascade to associated invoice
+    delete: async (treatmentId, petid = null) => {
+        if (!confirm('Are you sure you want to delete this treatment record and its associated invoice?')) return;
+        try {
+            const res = await fetch(`${app.db.apiURL}/treatments/${treatmentId}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to delete treatment');
+            }
+
+            await app.db.loadState();
+
+            if (app.router.activeView === 'pet-details' && petid) {
+                app.pets.showDetail(petid);
+            } else if (app.router.activeView === 'treatments') {
+                app.treatments.renderList();
+            } else if (app.router.activeView === 'dashboard') {
+                app.dashboard.render();
+            } else if (app.router.activeView === 'billing') {
+                app.billing.renderList();
+            }
+        } catch (err) {
+            console.error('Error deleting treatment:', err);
+            alert('Could not delete treatment: ' + err.message);
         }
     }
 };

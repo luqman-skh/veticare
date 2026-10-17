@@ -60,7 +60,7 @@
                 <div class="user-profile">
                     <div class="user-avatar">SJ</div>
                     <div class="user-info">
-                        <span class="user-name">Dr. S. Jenkins</span>
+                        <span class="user-name">Dr. A. R. Shaikh</span>
                         <span class="user-role">Lead Vet</span>
                     </div>
                 </div>
@@ -93,7 +93,7 @@
                 <section id="view-dashboard" class="view-panel active">
                     <div class="welcome-banner">
                         <div class="banner-content">
-                            <h1>Welcome back, Dr. Jenkins</h1>
+                            <h1>Welcome back, Dr. A. R. Shaikh</h1>
                             <p>Here is what's happening at VetiCare today. You have <span class="highlight" id="today-apt-count">0</span> appointments scheduled.</p>
                         </div>
                         <div class="banner-illustration">
@@ -213,6 +213,10 @@
                             Back to Owners
                         </button>
                         <div class="action-buttons">
+                            <button class="secondary-btn btn-sm btn-danger" id="btn-delete-owner">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                Delete Owner
+                            </button>
                             <button class="secondary-btn btn-sm" id="btn-edit-owner">Edit Profile</button>
                             <button class="primary-btn btn-sm" id="btn-add-pet-to-owner">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -292,6 +296,10 @@
                             Back to Pets
                         </button>
                         <div class="action-buttons">
+                            <button class="secondary-btn btn-sm btn-danger" id="btn-delete-pet">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                Delete Patient
+                            </button>
                             <button class="secondary-btn btn-sm" id="btn-edit-pet">Edit Pet</button>
                             <button class="accent-btn btn-sm" id="btn-add-appointment">Book Appointment</button>
                             <button class="primary-btn btn-sm" id="btn-add-treatment">Record Visit</button>
@@ -368,7 +376,7 @@
                                 <label for="scheduler-vet-select">Filter by Veterinarian:</label>
                                 <select id="scheduler-vet-select" class="select-input mt-2 w-full" style="width: 100%;">
                                     <option value="all">All Veterinarians</option>
-                                    <option value="Dr. S. Jenkins">Dr. S. Jenkins</option>
+                                    <option value="Dr. A. R. Shaikh">Dr. A. R. Shaikh</option>
                                     <option value="Dr. A. Rivera">Dr. A. Rivera</option>
                                     <option value="Dr. T. Chen">Dr. T. Chen</option>
                                 </select>
@@ -667,7 +675,7 @@
                     <div class="form-group">
                         <label for="appt-vet" class="required">Select Veterinarian</label>
                         <select id="appt-vet" required>
-                            <option value="Dr. S. Jenkins">Dr. S. Jenkins</option>
+                            <option value="Dr. A. R. Shaikh">Dr. A. R. Shaikh</option>
                             <option value="Dr. A. Rivera">Dr. A. Rivera</option>
                             <option value="Dr. T. Chen">Dr. T. Chen</option>
                         </select>
@@ -740,7 +748,7 @@
                     </div>
                     <div class="form-group">
                         <label for="treatment-date" class="required">Visit Date & Time</label>
-                        <input type="datetime-local" id="treatment-date" required>
+                        <input type="date_time-local" id="treatment-date" required>
                     </div>
                     <div class="form-group col-span-2">
                         <label for="treatment-symptoms" class="required">Reported Symptoms</label>
@@ -853,7 +861,11 @@
                     <span id="inv-status-stamp" style="font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Paid</span>
                 </div>
             </div>
-            <div class="modal-actions no-print" style="padding: 24px 32px; background: var(--bg-surface-elevated); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
+            <div class="modal-actions no-print" style="padding: 24px 32px; background: var(--bg-surface-elevated); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px; align-items: center;">
+                <button type="button" class="secondary-btn btn-danger btn-sm" id="delete-invoice-modal-btn" style="margin-right: auto;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    Delete Invoice
+                </button>
                 <button type="button" class="secondary-btn" id="cancel-invoice-modal">Close</button>
                 <button type="button" class="accent-btn" id="print-invoice-btn" onclick="window.print()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
