@@ -61,10 +61,18 @@ app.pets = {
         if (searchQuery.trim() !== '') {
             pets = pets.filter(pet => {
                 const owner = owners.find(o => o.id === pet.ownerid) || { name: '' };
+                const chip = (pet.chip_number || '').toLowerCase();
+                const col = (pet.color || '').toLowerCase();
+                const gen = (pet.gender || '').toLowerCase();
+                const loc = (pet.location || '').toLowerCase();
                 return pet.name.toLowerCase().includes(searchQuery) ||
                        pet.breed.toLowerCase().includes(searchQuery) ||
                        pet.species.toLowerCase().includes(searchQuery) ||
-                       owner.name.toLowerCase().includes(searchQuery);
+                       owner.name.toLowerCase().includes(searchQuery) ||
+                       chip.includes(searchQuery) ||
+                       col.includes(searchQuery) ||
+                       gen.includes(searchQuery) ||
+                       loc.includes(searchQuery);
             });
         }
 
@@ -101,7 +109,11 @@ app.pets = {
             let dotColor = 'dot-green';
             if (pet.vaccination === 'Partially Vaccinated') dotColor = 'dot-amber';
             if (pet.vaccination === 'Not Vaccinated') dotColor = 'dot-red';
-            if (pet.vaccination === 'Unknown') dotColor = 'dot-amber';
+            if (!pet.vaccination || pet.vaccination === 'Unknown') dotColor = 'dot-amber';
+
+            const weightStr = (pet.weight !== null && pet.weight !== undefined && pet.weight !== '' && !isNaN(pet.weight))
+                ? `${pet.weight} kg`
+                : 'Weight: N/A';
 
             card.innerHTML = `
                 <div class="pet-species-badge">${pet.species}</div>
@@ -113,9 +125,24 @@ app.pets = {
                         <span>Breed:</span>
                         <span class="pet-info-value">${pet.breed}</span>
                     </div>
+                    ${pet.chip_number ? `
+                    <div class="pet-info-row">
+                        <span>Chip / ID:</span>
+                        <span class="pet-info-value">${pet.chip_number}</span>
+                    </div>` : ''}
+                    ${pet.gender || pet.color ? `
+                    <div class="pet-info-row">
+                        <span>Details:</span>
+                        <span class="pet-info-value">${[pet.gender, pet.color].filter(Boolean).join(' • ')}</span>
+                    </div>` : ''}
+                    ${pet.location ? `
+                    <div class="pet-info-row">
+                        <span>Location:</span>
+                        <span class="pet-info-value">${pet.location}</span>
+                    </div>` : ''}
                     <div class="pet-info-row">
                         <span>Age / Weight:</span>
-                        <span class="pet-info-value">${ageStr} • ${pet.weight} kg</span>
+                        <span class="pet-info-value">${ageStr} • ${weightStr}</span>
                     </div>
                     <div class="pet-info-row">
                         <span>Owner:</span>
@@ -126,7 +153,7 @@ app.pets = {
                 <div class="pet-card-footer">
                     <span class="vaccination-indicator">
                         <span class="indicator-dot ${dotColor}"></span>
-                        ${pet.vaccination}
+                        ${pet.vaccination || 'Not Specified'}
                     </span>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <button class="secondary-btn btn-sm btn-danger" onclick="event.stopPropagation(); app.pets.delete('${pet.id}', '${pet.name.replace(/'/g, "\\'")}')" title="Delete Patient">
@@ -165,8 +192,12 @@ app.pets = {
         // Populate basic information
         document.getElementById('pd-name').textContent = pet.name;
         document.getElementById('pd-species-breed').textContent = `${pet.species} / ${pet.breed}`;
+        document.getElementById('pd-chip-number').textContent = pet.chip_number || 'N/A';
+        document.getElementById('pd-gender').textContent = pet.gender || 'N/A';
+        document.getElementById('pd-color').textContent = pet.color || 'N/A';
+        document.getElementById('pd-location').textContent = pet.location || 'N/A';
         document.getElementById('pd-age').textContent = `${app.pets.calculateAge(pet.dob)} (${new Date(pet.dob).toLocaleDateString()})`;
-        document.getElementById('pd-weight').textContent = `${pet.weight} kg`;
+        document.getElementById('pd-weight').textContent = (pet.weight !== null && pet.weight !== undefined && pet.weight !== '' && !isNaN(pet.weight)) ? `${pet.weight} kg` : 'Not recorded';
         
         const ownerLink = document.getElementById('pd-owner');
         ownerLink.textContent = owner.name;
@@ -177,7 +208,7 @@ app.pets = {
 
         // Vaccination badge color styling
         const vaccBadge = document.getElementById('pd-vaccination');
-        vaccBadge.textContent = pet.vaccination;
+        vaccBadge.textContent = pet.vaccination || 'Not Specified';
         vaccBadge.className = 'badge'; // reset
         if (pet.vaccination === 'Up-to-date') vaccBadge.style.backgroundColor = 'var(--color-success-soft)', vaccBadge.style.color = 'var(--color-success)';
         else if (pet.vaccination === 'Not Vaccinated') vaccBadge.style.backgroundColor = 'var(--color-danger-soft)', vaccBadge.style.color = 'var(--color-danger)';
@@ -321,12 +352,17 @@ app.pets = {
         const species = document.getElementById('pet-species').value;
         const breed = document.getElementById('pet-breed').value.trim();
         const dob = document.getElementById('pet-dob').value;
-        const weight = parseFloat(document.getElementById('pet-weight').value);
-        const vaccination = document.getElementById('pet-vaccination').value;
+        const chip_number = document.getElementById('pet-chip-number').value.trim();
+        const gender = document.getElementById('pet-gender').value;
+        const color = document.getElementById('pet-color').value.trim();
+        const location = document.getElementById('pet-location').value.trim();
+        const weightVal = document.getElementById('pet-weight').value;
+        const weight = (weightVal !== '' && !isNaN(weightVal)) ? parseFloat(weightVal) : null;
+        const vaccination = document.getElementById('pet-vaccination').value || 'Unknown';
         const notes = document.getElementById('pet-notes').value.trim();
 
-        if (!name || !ownerid || !breed || !dob || isNaN(weight)) {
-            alert('Please fill out all required fields.');
+        if (!name || !ownerid || !species || !breed || !dob || !chip_number || !color || !gender || !location) {
+            alert('Please fill out all mandatory fields: Pet Name, Owner, Species, Breed, Date of Birth, Identification / Chip Number, Gender, Colour, and Location.');
             return;
         }
 
@@ -337,6 +373,10 @@ app.pets = {
             species,
             breed,
             dob,
+            chip_number,
+            gender,
+            color,
+            location,
             weight,
             vaccination,
             notes

@@ -154,16 +154,55 @@ app.get('/api/pets', async (req, res) => {
         .order('name', { ascending: true });
 
     if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
+
+    // Normalize metadata if stored in notes fallback
+    const normalized = (data || []).map(p => {
+        if ((!p.chip_number || !p.gender || !p.color || !p.location) && p.notes && p.notes.includes('[METADATA:')) {
+            try {
+                const match = p.notes.match(/\[METADATA:(.*?)\]/);
+                if (match && match[1]) {
+                    const meta = JSON.parse(match[1]);
+                    return {
+                        ...p,
+                        chip_number: p.chip_number || meta.chip_number || '',
+                        gender: p.gender || meta.gender || '',
+                        color: p.color || meta.color || '',
+                        location: p.location || meta.location || '',
+                        notes: p.notes.replace(/\[METADATA:.*?\]\s*/, '')
+                    };
+                }
+            } catch (e) {}
+        }
+        return p;
+    });
+
+    res.json(normalized);
 });
 
 app.post('/api/pets', async (req, res) => {
-    const { id, ownerid, name, species, breed, dob, weight, vaccination, notes } = req.body;
-    if (!ownerid || !name || !species || !breed || !dob || isNaN(weight)) {
-        return res.status(400).json({ error: 'Required fields missing or invalid.' });
+    const { id, ownerid, name, species, breed, dob, weight, vaccination, notes, chip_number, gender, color, location } = req.body;
+    if (!ownerid || !name || !species || !breed || !dob || !chip_number || !color || !gender || !location) {
+        return res.status(400).json({ error: 'Required fields missing: Owner, Name, Species, Breed, Date of Birth, Identification / Chip Number, Gender, Colour, and Location are mandatory.' });
     }
 
     const pId = id || 'p-' + Date.now();
+    const parsedWeight = (weight !== undefined && weight !== null && weight !== '' && !isNaN(weight)) ? Number(weight) : null;
+    const finalVaccination = vaccination || 'Unknown';
+
+    const fullRecord = {
+        ownerid,
+        name,
+        species,
+        breed,
+        dob,
+        chip_number,
+        gender,
+        color,
+        location,
+        weight: parsedWeight,
+        vaccination: finalVaccination,
+        notes: notes || ''
+    };
 
     const { data: existing } = await supabase
         .from('pets')
@@ -172,19 +211,56 @@ app.post('/api/pets', async (req, res) => {
         .single();
 
     if (existing) {
-        // Update
-        const { error } = await supabase
+        // Try update with full record (including new columns)
+        let { error } = await supabase
             .from('pets')
-            .update({ ownerid, name, species, breed, dob, weight, vaccination, notes })
+            .update(fullRecord)
             .eq('id', pId);
+
+        // Fallback: If Supabase schema does not have the new columns yet, embed in notes
+        if (error && (error.code === 'PGRST204' || (error.message && (error.message.includes('column') || error.message.includes('schema cache'))))) {
+            const meta = { chip_number, gender, color, location };
+            const combinedNotes = `[METADATA:${JSON.stringify(meta)}] ${notes || ''}`.trim();
+            const fallbackRecord = {
+                ownerid,
+                name,
+                species,
+                breed,
+                dob,
+                weight: parsedWeight,
+                vaccination: finalVaccination,
+                notes: combinedNotes
+            };
+            const fallbackRes = await supabase.from('pets').update(fallbackRecord).eq('id', pId);
+            error = fallbackRes.error;
+        }
 
         if (error) return res.status(500).json({ error: error.message });
         res.json({ message: 'Pet profile updated successfully.', id: pId });
     } else {
-        // Insert
-        const { error } = await supabase
+        // Try insert with full record
+        let { error } = await supabase
             .from('pets')
-            .insert({ id: pId, ownerid, name, species, breed, dob, weight, vaccination, notes });
+            .insert({ id: pId, ...fullRecord });
+
+        // Fallback: If Supabase schema does not have the new columns yet, embed in notes
+        if (error && (error.code === 'PGRST204' || (error.message && (error.message.includes('column') || error.message.includes('schema cache'))))) {
+            const meta = { chip_number, gender, color, location };
+            const combinedNotes = `[METADATA:${JSON.stringify(meta)}] ${notes || ''}`.trim();
+            const fallbackRecord = {
+                id: pId,
+                ownerid,
+                name,
+                species,
+                breed,
+                dob,
+                weight: parsedWeight,
+                vaccination: finalVaccination,
+                notes: combinedNotes
+            };
+            const fallbackRes = await supabase.from('pets').insert(fallbackRecord);
+            error = fallbackRes.error;
+        }
 
         if (error) return res.status(500).json({ error: error.message });
         res.status(201).json({ message: 'Pet profile created successfully.', id: pId });

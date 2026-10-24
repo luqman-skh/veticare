@@ -323,6 +323,22 @@
                             
                             <div class="profile-info-list mt-4">
                                 <div class="profile-info-item">
+                                    <span class="info-label">Chip / ID Number</span>
+                                    <span class="info-value" id="pd-chip-number">N/A</span>
+                                </div>
+                                <div class="profile-info-item">
+                                    <span class="info-label">Gender</span>
+                                    <span class="info-value" id="pd-gender">N/A</span>
+                                </div>
+                                <div class="profile-info-item">
+                                    <span class="info-label">Colour</span>
+                                    <span class="info-value" id="pd-color">N/A</span>
+                                </div>
+                                <div class="profile-info-item">
+                                    <span class="info-label">Location</span>
+                                    <span class="info-value" id="pd-location">N/A</span>
+                                </div>
+                                <div class="profile-info-item">
                                     <span class="info-label">Age</span>
                                     <span class="info-value" id="pd-age">N/A</span>
                                 </div>
@@ -641,16 +657,37 @@
                         <input type="date" id="pet-dob" required>
                     </div>
                     <div class="form-group">
-                        <label for="pet-weight" class="required">Weight (kg)</label>
-                        <input type="number" step="0.1" id="pet-weight" placeholder="15.5" required>
+                        <label for="pet-chip-number" class="required">Identification Number / Chip Number</label>
+                        <input type="text" id="pet-chip-number" placeholder="e.g. CHIP-982000412 / ID-4821" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pet-gender" class="required">Gender</label>
+                        <select id="pet-gender" required>
+                            <option value="" disabled selected>Select Gender...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Castrated">Castrated</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pet-color" class="required">Colour</label>
+                        <input type="text" id="pet-color" placeholder="e.g. Brown &amp; White, Black, Golden" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pet-location" class="required">Location</label>
+                        <input type="text" id="pet-location" placeholder="e.g. Barn 3, Pen 12, Ward A, City / Region" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pet-weight">Weight (kg) <span style="font-weight: normal; font-size: 11px; color: var(--text-muted);">(Optional)</span></label>
+                        <input type="number" step="0.1" id="pet-weight" placeholder="15.5">
                     </div>
                     <div class="form-group col-span-2">
-                        <label for="pet-vaccination" class="required">Vaccination Status</label>
-                        <select id="pet-vaccination" required>
+                        <label for="pet-vaccination">Vaccination Status <span style="font-weight: normal; font-size: 11px; color: var(--text-muted);">(Optional)</span></label>
+                        <select id="pet-vaccination">
+                            <option value="Unknown" selected>Unknown / Not Specified</option>
                             <option value="Up-to-date">Up to Date</option>
                             <option value="Partially Vaccinated">Partially Vaccinated</option>
                             <option value="Not Vaccinated">Not Vaccinated</option>
-                            <option value="Unknown">Unknown / Pending Record</option>
                         </select>
                     </div>
                     <div class="form-group col-span-2">

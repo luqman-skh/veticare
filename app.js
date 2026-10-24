@@ -47,7 +47,28 @@ Object.assign(window.app, {
                     fetch(`${app.db.apiURL}/invoices`).then(r => r.json())
                 ]);
 
-                app.db.state = { owners, pets, appointments, treatments, invoices };
+                // Normalize pets metadata if present in notes fallback
+                const normalizedPets = (Array.isArray(pets) ? pets : []).map(p => {
+                    if ((!p.chip_number || !p.gender || !p.color || !p.location) && p.notes && p.notes.includes('[METADATA:')) {
+                        try {
+                            const match = p.notes.match(/\[METADATA:(.*?)\]/);
+                            if (match && match[1]) {
+                                const meta = JSON.parse(match[1]);
+                                return {
+                                    ...p,
+                                    chip_number: p.chip_number || meta.chip_number || '',
+                                    gender: p.gender || meta.gender || '',
+                                    color: p.color || meta.color || '',
+                                    location: p.location || meta.location || '',
+                                    notes: p.notes.replace(/\[METADATA:.*?\]\s*/, '')
+                                };
+                            }
+                        } catch (e) {}
+                    }
+                    return p;
+                });
+
+                app.db.state = { owners, pets: normalizedPets, appointments, treatments, invoices };
             } catch (err) {
                 console.error('Error fetching state from DBMS backend:', err);
             }
@@ -545,11 +566,26 @@ Object.assign(window.app, {
                 }
                 document.getElementById('pet-breed').value = petData.breed;
                 document.getElementById('pet-dob').value = petData.dob;
-                document.getElementById('pet-weight').value = petData.weight;
-                document.getElementById('pet-vaccination').value = petData.vaccination;
+                document.getElementById('pet-chip-number').value = petData.chip_number || '';
+                document.getElementById('pet-gender').value = petData.gender || '';
+                document.getElementById('pet-color').value = petData.color || '';
+                document.getElementById('pet-location').value = petData.location || '';
+                document.getElementById('pet-weight').value = (petData.weight !== null && petData.weight !== undefined && !isNaN(petData.weight)) ? petData.weight : '';
+                document.getElementById('pet-vaccination').value = petData.vaccination || 'Unknown';
                 document.getElementById('pet-notes').value = petData.notes || '';
             } else {
                 title.textContent = 'Add New Patient Profile';
+                document.getElementById('pet-id').value = '';
+                document.getElementById('pet-name').value = '';
+                document.getElementById('pet-breed').value = '';
+                document.getElementById('pet-dob').value = '';
+                document.getElementById('pet-chip-number').value = '';
+                document.getElementById('pet-gender').value = '';
+                document.getElementById('pet-color').value = '';
+                document.getElementById('pet-location').value = '';
+                document.getElementById('pet-weight').value = '';
+                document.getElementById('pet-vaccination').value = 'Unknown';
+                document.getElementById('pet-notes').value = '';
                 if (preselectedOwnerId) {
                     ownerSelect.value = preselectedOwnerId;
                 }
