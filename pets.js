@@ -41,9 +41,19 @@ app.pets = {
         // Apply species filtering pills
         if (activeFilter !== 'all') {
             if (activeFilter === 'Other') {
-                pets = pets.filter(pet => !['Dog', 'Cat', 'Bird'].includes(pet.species));
+                const knownSpecies = ['dog', 'cat', 'bird', 'rabbit', 'reptile', 'horse', 'horses', 'goat', 'goats', 'sheep', 'buffalo', 'buffaloes', 'buffalos', 'cattle', 'cattles', 'cow', 'cows'];
+                pets = pets.filter(pet => !knownSpecies.includes((pet.species || '').toLowerCase().trim()));
             } else {
-                pets = pets.filter(pet => pet.species === activeFilter);
+                const target = activeFilter.toLowerCase().trim();
+                pets = pets.filter(pet => {
+                    const sp = (pet.species || '').toLowerCase().trim();
+                    return sp === target ||
+                           sp === target + 's' ||
+                           sp + 's' === target ||
+                           (target === 'cattle' && (sp === 'cattles' || sp === 'cow' || sp === 'cows')) ||
+                           (target === 'cattles' && (sp === 'cattle' || sp === 'cow' || sp === 'cows')) ||
+                           (target === 'buffalo' && (sp === 'buffaloes' || sp === 'buffalos'));
+                });
             }
         }
 
@@ -76,7 +86,7 @@ app.pets = {
             return;
         }
 
-        const speciesIcons = { Dog: '🐶', Cat: '🐱', Bird: '🦜', Rabbit: '🐰', Reptile: '🦎', Other: '🐾' };
+        const speciesIcons = { Dog: '🐶', Dogs: '🐶', Cat: '🐱', Cats: '🐱', Bird: '🦜', Birds: '🦜', Rabbit: '🐰', Rabbits: '🐰', Reptile: '🦎', Reptiles: '🦎', Horse: '🐴', Horses: '🐴', Goat: '🐐', Goats: '🐐', Sheep: '🐑', Buffalo: '🦬', Buffaloes: '🦬', Buffalos: '🦬', Cattle: '🐄', Cattles: '🐄', Cow: '🐄', Cows: '🐄', Other: '🐾' };
 
         pets.forEach(pet => {
             const card = document.createElement('div');
@@ -173,7 +183,7 @@ app.pets = {
         else if (pet.vaccination === 'Not Vaccinated') vaccBadge.style.backgroundColor = 'var(--color-danger-soft)', vaccBadge.style.color = 'var(--color-danger)';
         else vaccBadge.style.backgroundColor = 'var(--color-accent-soft)', vaccBadge.style.color = 'var(--color-accent)';
 
-        const speciesIcons = { Dog: '🐶', Cat: '🐱', Bird: '🦜', Rabbit: '🐰', Reptile: '🦎', Other: '🐾' };
+        const speciesIcons = { Dog: '🐶', Dogs: '🐶', Cat: '🐱', Cats: '🐱', Bird: '🦜', Birds: '🦜', Rabbit: '🐰', Rabbits: '🐰', Reptile: '🦎', Reptiles: '🦎', Horse: '🐴', Horses: '🐴', Goat: '🐐', Goats: '🐐', Sheep: '🐑', Buffalo: '🦬', Buffaloes: '🦬', Buffalos: '🦬', Cattle: '🐄', Cattles: '🐄', Cow: '🐄', Cows: '🐄', Other: '🐾' };
         document.getElementById('pd-avatar').textContent = speciesIcons[pet.species] || speciesIcons.Other;
 
         // Render treatment records

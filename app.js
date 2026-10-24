@@ -273,7 +273,7 @@ Object.assign(window.app, {
             }));
 
             // Colors array
-            const colors = ['var(--color-primary)', 'var(--color-secondary)', 'var(--color-accent)', 'var(--color-success)', '#94a3b8'];
+            const colors = ['var(--color-primary)', 'var(--color-secondary)', 'var(--color-accent)', 'var(--color-success)', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316', '#06b6d4', '#84cc16', '#a855f7', '#94a3b8'];
 
             // Generate Donut SVG
             let svgContent = `<svg width="100%" height="100%" viewBox="0 0 42 42" class="donut">
@@ -522,7 +522,27 @@ Object.assign(window.app, {
                 document.getElementById('pet-id').value = petData.id;
                 document.getElementById('pet-name').value = petData.name;
                 document.getElementById('pet-owner').value = petData.ownerid;
-                document.getElementById('pet-species').value = petData.species;
+                const speciesSelect = document.getElementById('pet-species');
+                speciesSelect.value = petData.species;
+                if (!speciesSelect.value && petData.species) {
+                    for (const opt of speciesSelect.options) {
+                        const optVal = opt.value.toLowerCase();
+                        const petSp = petData.species.toLowerCase().trim();
+                        if (optVal === petSp || optVal + 's' === petSp || optVal === petSp + 's' ||
+                            (optVal === 'cattle' && (petSp === 'cattles' || petSp === 'cow' || petSp === 'cows')) ||
+                            (optVal === 'buffalo' && (petSp === 'buffaloes' || petSp === 'buffalos'))) {
+                            speciesSelect.value = opt.value;
+                            break;
+                        }
+                    }
+                    if (!speciesSelect.value) {
+                        const customOpt = document.createElement('option');
+                        customOpt.value = petData.species;
+                        customOpt.textContent = petData.species;
+                        speciesSelect.appendChild(customOpt);
+                        speciesSelect.value = petData.species;
+                    }
+                }
                 document.getElementById('pet-breed').value = petData.breed;
                 document.getElementById('pet-dob').value = petData.dob;
                 document.getElementById('pet-weight').value = petData.weight;

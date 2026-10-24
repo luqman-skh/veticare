@@ -768,6 +768,7 @@ html[data-theme="light"] .moon-icon { display: block; }
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .filter-group label {
@@ -1745,6 +1746,7 @@ html[data-theme="light"] .moon-icon { display: block; }
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .agenda-vet-text {
