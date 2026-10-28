@@ -117,13 +117,13 @@ CREATE TABLE invoices (
     treatmentId TEXT,
     petid TEXT NOT NULL,
     date_time TEXT NOT NULL,
-    consultationFee REAL NOT NULL,
+    consultationfee REAL NOT NULL,
     treatmentCost REAL NOT NULL,
-    medicineCost REAL NOT NULL,
+    medicinecost REAL NOT NULL,
     tax REAL NOT NULL,
     total REAL NOT NULL,
     status TEXT NOT NULL,
-    paymentMethod TEXT NOT NULL,
+    paymentmethod TEXT NOT NULL,
     reason TEXT NOT NULL,
     FOREIGN KEY(petid) REFERENCES pets(id) ON DELETE CASCADE
 );

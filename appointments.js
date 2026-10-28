@@ -197,25 +197,36 @@ app.appointments = {
             const displayHour = hourNum % 12 === 0 ? 12 : hourNum % 12;
             const displayTime = `${displayHour}:${min}`;
 
+            const statusClass = (appt.status || 'Scheduled').toLowerCase().replace(/\s+/g, '-');
+            const labelVal = appt.label || 'New';
+            const labelClass = labelVal.toLowerCase().replace(/\s+/g, '-');
+
             const card = document.createElement('div');
-            card.className = `agenda-card ${appt.status.toLowerCase()}`;
+            card.className = `agenda-card ${statusClass}`;
 
             // Render action buttons depending on appointment state
             let actionsHTML = '';
             if (appt.status === 'Scheduled') {
                 actionsHTML = `
-                    <div class="agenda-actions">
+                    <div class="agenda-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <button class="secondary-btn btn-sm" onclick="app.appointments.changeStatus('${appt.id}', 'Cancelled')" style="color: var(--color-danger); border-color: var(--color-danger-soft);">Cancel</button>
-                        <button class="primary-btn btn-sm" onclick="app.appointments.completeAppointment('${appt.id}', '${appt.petid}')">Complete</button>
+                        <button class="primary-btn btn-sm" onclick="app.appointments.openCompletionModal('${appt.id}')">Complete</button>
                         <button class="secondary-btn btn-sm btn-danger" onclick="app.appointments.delete('${appt.id}')" title="Delete Appointment">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         </button>
                     </div>
                 `;
             } else {
+                const canContinue = ['Closed', 'Referred', 'Completed', 'Follow-up'].includes(appt.status);
                 actionsHTML = `
-                    <div class="agenda-actions" style="display: flex; align-items: center; gap: 8px;">
-                        <span class="status-badge ${appt.status.toLowerCase()}">${appt.status}</span>
+                    <div class="agenda-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span class="status-badge ${statusClass}">${appt.status}</span>
+                        ${canContinue ? `
+                            <button class="secondary-btn btn-sm btn-followup" onclick="app.appointments.continueAsFollowup('${appt.id}')" title="Continue as Follow-up Case" style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                                Follow-up
+                            </button>
+                        ` : ''}
                         <button class="secondary-btn btn-sm btn-danger" onclick="app.appointments.delete('${appt.id}')" title="Delete Appointment">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         </button>
@@ -223,18 +234,24 @@ app.appointments = {
                 `;
             }
 
+            const outcomeInfo = (appt.outcome_notes && appt.status !== 'Scheduled')
+                ? `<div style="font-size: 11px; color: var(--color-primary-light); margin-top: 3px;">Note: <em>${appt.outcome_notes}</em></div>`
+                : '';
+
             card.innerHTML = `
                 <div class="agenda-time">
                     ${displayTime}
                     <span class="agenda-time-period">${period}</span>
                 </div>
                 <div class="agenda-info">
-                    <div class="agenda-pet-title">
+                    <div class="agenda-pet-title" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <span style="cursor:pointer;" onclick="window.location.hash='pet-details/${pet.id}'">${pet.name}</span>
                         <span class="badge" style="font-size: 10px; padding: 2px 6px;">${pet.species}</span>
+                        <span class="badge label-badge ${labelClass}">${labelVal}</span>
                     </div>
                     <div class="agenda-vet-text">Vet: <strong>${appt.vetname}</strong> • Owner: ${owner.name}</div>
                     <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Reason: <em>${appt.reason}</em></div>
+                    ${outcomeInfo}
                 </div>
                 ${actionsHTML}
             `;
@@ -260,6 +277,7 @@ app.appointments = {
     save: async () => {
         const id = document.getElementById('appointment-id').value;
         const petid = document.getElementById('appt-pet').value;
+        const label = document.getElementById('appt-label').value || 'New';
         const vetname = document.getElementById('appt-vet').value;
         const date = document.getElementById('appt-date').value;
         const time = document.getElementById('appt-time').value;
@@ -282,17 +300,21 @@ app.appointments = {
         const payload = {
             id: id || undefined,
             petid,
+            label,
             vetname,
             date_time: targetdate_time,
             reason,
-            status: id ? undefined : 'Scheduled' // backend updates existing status or sets to Scheduled if new
+            status: id ? undefined : 'Scheduled'
         };
 
         if (id) {
-            // Keep status if editing
+            // Keep status & existing label/outcomes if editing
             const existing = (app.db.get('appointments') || []).find(a => a.id === id);
             if (existing) {
                 payload.status = existing.status;
+                if (!payload.label) payload.label = existing.label || 'New';
+                if (existing.outcome) payload.outcome = existing.outcome;
+                if (existing.outcome_notes) payload.outcome_notes = existing.outcome_notes;
             }
         }
 
@@ -336,12 +358,114 @@ app.appointments = {
         app.appointments.renderAgenda();
     },
 
-    // Complete appointment - marks Completed and opens Treatment Modal
+    // Open modal to select case outcome (Closed, Follow-up, Referred, Deceased)
+    openCompletionModal: (apptId) => {
+        const appointments = app.db.get('appointments') || [];
+        const appt = appointments.find(a => a.id === apptId);
+        if (!appt) return;
+
+        const pets = app.db.get('pets') || [];
+        const owners = app.db.get('owners') || [];
+        const pet = pets.find(p => p.id === appt.petid) || { name: 'Unknown Patient', species: 'Pet' };
+        const owner = owners.find(o => o.id === pet.ownerid) || { name: 'Unknown Owner' };
+
+        document.getElementById('completion-appt-id').value = appt.id;
+        document.getElementById('completion-pet-id').value = appt.petid;
+
+        const summaryDiv = document.getElementById('completion-patient-summary');
+        if (summaryDiv) {
+            summaryDiv.innerHTML = `
+                <div style="font-weight: 700; color: var(--text-main); font-size: 14px; margin-bottom: 4px;">
+                    ${pet.name} <span class="badge" style="font-size: 10px; padding: 2px 6px;">${pet.species}</span>
+                </div>
+                <div style="color: var(--text-muted); font-size: 12px;">
+                    Owner: <strong>${owner.name}</strong> • Vet: <strong>${appt.vetname}</strong> • Reason: <em>${appt.reason}</em>
+                </div>
+            `;
+        }
+
+        // Default to Closed
+        const defaultRadio = document.querySelector('input[name="appt-completion-outcome"][value="Closed"]');
+        if (defaultRadio) defaultRadio.checked = true;
+
+        const notesField = document.getElementById('completion-notes');
+        if (notesField) notesField.value = '';
+
+        const followupPrompt = document.getElementById('completion-followup-prompt');
+        if (followupPrompt) followupPrompt.style.display = 'none';
+
+        const autoCheck = document.getElementById('completion-auto-schedule-followup');
+        if (autoCheck) autoCheck.checked = false;
+
+        document.getElementById('appointment-completion-modal').classList.add('active');
+    },
+
+    // Save completion outcome (Closed, Follow-up, Referred, Deceased)
+    saveCompletion: async (openTreatmentModal = true) => {
+        const apptId = document.getElementById('completion-appt-id').value;
+        const petid = document.getElementById('completion-pet-id').value;
+        if (!apptId) return;
+
+        const selectedRadio = document.querySelector('input[name="appt-completion-outcome"]:checked');
+        const outcome = selectedRadio ? selectedRadio.value : 'Closed';
+        const outcomeNotes = document.getElementById('completion-notes')?.value.trim() || '';
+        const autoFollowup = document.getElementById('completion-auto-schedule-followup')?.checked;
+
+        try {
+            const res = await fetch(`${app.db.apiURL}/appointments/${apptId}/complete`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    status: outcome,
+                    outcome,
+                    outcomeNotes
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to update appointment outcome');
+            }
+
+            // Reload state
+            await app.db.loadState();
+
+            // Close completion modal
+            document.getElementById('appointment-completion-modal').classList.remove('active');
+
+            // Refresh views
+            app.appointments.renderCalendar();
+            app.appointments.renderAgenda();
+            if (app.router.activeView === 'dashboard') {
+                app.dashboard.render();
+            }
+
+            // If auto followup requested, immediately trigger follow-up booking
+            if (outcome === 'Follow-up' && autoFollowup) {
+                app.appointments.continueAsFollowup(apptId);
+            } else if (openTreatmentModal && outcome !== 'Deceased') {
+                // Launch Record Visit modal with appointment reference
+                app.ui.openTreatmentModal(null, petid, apptId);
+            }
+        } catch (err) {
+            console.error('Error saving appointment outcome:', err);
+            alert('Could not complete appointment: ' + err.message);
+        }
+    },
+
+    // Continue Closed or Referred (or any finished) case as a Follow-up case
+    continueAsFollowup: (apptId) => {
+        const appointments = app.db.get('appointments') || [];
+        const appt = appointments.find(a => a.id === apptId);
+        if (!appt) return;
+
+        // Open appointment modal pre-configured for Follow-up
+        app.ui.openAppointmentModal(null, null, appt.petid, 'Follow-up', 'Follow-up Exam', appt.vetname);
+    },
+
+    // Legacy complete handler forwards to outcome modal
     completeAppointment: async (apptId, petid) => {
-        await app.appointments.changeStatus(apptId, 'Completed');
-        
-        // Automatically launch Record Visit modal, passing pet ID and appointment reference
-        app.ui.openTreatmentModal(null, petid, apptId);
+        app.appointments.openCompletionModal(apptId);
     },
 
     // Delete appointment

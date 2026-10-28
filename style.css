@@ -1709,9 +1709,23 @@ html[data-theme="light"] .moon-icon { display: block; }
     transform: translateY(-2px);
 }
 
-.agenda-card.completed {
+.agenda-card.completed,
+.agenda-card.closed {
     border-left-color: var(--color-success);
-    opacity: 0.85;
+    opacity: 0.9;
+}
+
+.agenda-card.follow-up {
+    border-left-color: #0ea5e9;
+}
+
+.agenda-card.referred {
+    border-left-color: #f59e0b;
+}
+
+.agenda-card.deceased {
+    border-left-color: #64748b;
+    opacity: 0.75;
 }
 
 .agenda-card.cancelled {
@@ -1772,14 +1786,77 @@ html[data-theme="light"] .moon-icon { display: block; }
     color: var(--color-primary-light);
 }
 
-.status-badge.completed {
+.status-badge.completed,
+.status-badge.closed {
     background: var(--color-success-soft);
     color: var(--color-success);
+}
+
+.status-badge.follow-up {
+    background: rgba(14, 165, 233, 0.15);
+    color: #0ea5e9;
+}
+
+.status-badge.referred {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.status-badge.deceased {
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
 }
 
 .status-badge.cancelled {
     background: var(--color-danger-soft);
     color: var(--color-danger);
+}
+
+/* Appointment Case Labels */
+.label-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: var(--border-radius-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.label-badge.new {
+    background: rgba(99, 102, 241, 0.15);
+    color: #6366f1;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.label-badge.follow-up {
+    background: rgba(14, 165, 233, 0.15);
+    color: #0ea5e9;
+    border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.label-badge.referred {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.btn-followup {
+    color: #0ea5e9 !important;
+    border-color: rgba(14, 165, 233, 0.4) !important;
+    background: transparent !important;
+}
+
+.btn-followup:hover {
+    background: rgba(14, 165, 233, 0.12) !important;
+    border-color: #0ea5e9 !important;
+    color: #0284c7 !important;
+}
+
+.outcome-radio-card:has(input:checked) {
+    border-color: var(--color-primary) !important;
+    background: rgba(99, 102, 241, 0.08) !important;
 }
 
 /* Phase 2: Clinical Visits/Treatments Logs */

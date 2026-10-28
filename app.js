@@ -213,7 +213,7 @@ Object.assign(window.app, {
             const todayAppointments = appointments.filter(a => a.date_time.startsWith(todayStr));
             
             // Calculate today's revenue (from treatments recorded today, plus general consultation fee $50 for finished appointments)
-            const completedToday = appointments.filter(a => a.date_time.startsWith(todayStr) && a.status === 'Completed');
+            const completedToday = appointments.filter(a => a.date_time.startsWith(todayStr) && ['Completed', 'Closed', 'Follow-up', 'Referred', 'Deceased'].includes(a.status));
             let todayRevenue = completedToday.length * 50; // base fee
             
             treatments.forEach(t => {
@@ -247,13 +247,18 @@ Object.assign(window.app, {
                     const item = document.createElement('div');
                     item.className = 'schedule-item';
                     item.onclick = () => window.location.hash = `pet-details/${pet.id}`;
+                    const labelVal = apt.label || 'New';
+                    const labelClass = labelVal.toLowerCase().replace(/\s+/g, '-');
                     item.innerHTML = `
                         <div class="sch-time">${time}</div>
                         <div class="sch-info">
-                            <div class="sch-pet-name">
+                            <div class="sch-pet-name" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                 ${pet.name} 
                                 <span class="badge" style="background-color: var(--bg-surface-elevated); font-size: 10px; padding: 2px 6px;">
                                     ${pet.species}
+                                </span>
+                                <span class="badge label-badge ${labelClass}">
+                                    ${labelVal}
                                 </span>
                             </div>
                             <div class="sch-owner">Owner: ${owner.name}</div>
@@ -406,6 +411,36 @@ Object.assign(window.app, {
                 e.preventDefault();
                 app.treatments.save();
             };
+
+            // Appointment completion outcome handlers
+            const closeCompBtn = document.getElementById('close-completion-modal');
+            if (closeCompBtn) closeCompBtn.onclick = () => app.ui.closeAllModals();
+            const cancelCompBtn = document.getElementById('cancel-completion-modal');
+            if (cancelCompBtn) cancelCompBtn.onclick = () => app.ui.closeAllModals();
+
+            const compForm = document.getElementById('appointment-completion-form');
+            if (compForm) {
+                compForm.onsubmit = (e) => {
+                    e.preventDefault();
+                    app.appointments.saveCompletion(true); // Save and proceed to record treatment
+                };
+            }
+
+            const saveOnlyBtn = document.getElementById('save-completion-only-btn');
+            if (saveOnlyBtn) {
+                saveOnlyBtn.onclick = () => {
+                    app.appointments.saveCompletion(false); // Save outcome only
+                };
+            }
+
+            document.querySelectorAll('input[name="appt-completion-outcome"]').forEach(radio => {
+                radio.onchange = (e) => {
+                    const prompt = document.getElementById('completion-followup-prompt');
+                    if (prompt) {
+                        prompt.style.display = e.target.value === 'Follow-up' ? 'block' : 'none';
+                    }
+                };
+            });
         },
 
         setTheme: (theme) => {
@@ -426,9 +461,13 @@ Object.assign(window.app, {
             document.getElementById('treatment-id').value = '';
             document.getElementById('treatment-appt-id').value = '';
             document.getElementById('appointment-collision-alert').style.display = 'none';
+            const compForm = document.getElementById('appointment-completion-form');
+            if (compForm) compForm.reset();
+            const compApptId = document.getElementById('completion-appt-id');
+            if (compApptId) compApptId.value = '';
         },
 
-        openAppointmentModal: (apptData = null, preselectedDate = null) => {
+        openAppointmentModal: (apptData = null, preselectedDate = null, preselectedPetId = null, preselectedLabel = 'New', prefilledReason = null, preselectedVet = null) => {
             app.ui.closeAllModals();
             const modal = document.getElementById('appointment-modal');
             const title = document.getElementById('appointment-modal-title');
@@ -445,14 +484,40 @@ Object.assign(window.app, {
                 title.textContent = 'Edit Consultation Slot';
                 document.getElementById('appointment-id').value = apptData.id;
                 document.getElementById('appt-pet').value = apptData.petid;
+                document.getElementById('appt-label').value = apptData.label || 'New';
                 document.getElementById('appt-vet').value = apptData.vetname;
                 document.getElementById('appt-date').value = apptData.date_time.split('T')[0];
                 document.getElementById('appt-time').value = apptData.date_time.split('T')[1];
                 document.getElementById('appt-reason').value = apptData.reason;
             } else {
-                title.textContent = 'Book Consultation Slot';
+                title.textContent = preselectedLabel === 'Follow-up' ? 'Book Follow-up Consultation' : 'Book Consultation Slot';
                 const today = new Date().toISOString().split('T')[0];
                 document.getElementById('appt-date').value = preselectedDate || today;
+                document.getElementById('appt-label').value = preselectedLabel || 'New';
+                if (preselectedPetId) {
+                    petSelect.value = preselectedPetId;
+                }
+                if (preselectedVet) {
+                    document.getElementById('appt-vet').value = preselectedVet;
+                }
+                if (prefilledReason) {
+                    const reasonSelect = document.getElementById('appt-reason');
+                    let found = false;
+                    for (const opt of reasonSelect.options) {
+                        if (opt.value === prefilledReason) {
+                            reasonSelect.value = prefilledReason;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        const opt = document.createElement('option');
+                        opt.value = prefilledReason;
+                        opt.textContent = prefilledReason;
+                        reasonSelect.appendChild(opt);
+                        reasonSelect.value = prefilledReason;
+                    }
+                }
             }
 
             modal.classList.add('active');
@@ -619,7 +684,7 @@ Object.assign(window.app, {
             chargesList.innerHTML = `
                 <tr style="border-bottom: 1px solid #f1f5f9;">
                     <td style="padding: 8px 0; color: #0f172a;">Base Consultation Fee</td>
-                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.consultationFee).toFixed(2)}</td>
+                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.consultationfee).toFixed(2)}</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #f1f5f9;">
                     <td style="padding: 8px 0; color: #0f172a;">Clinical Treatment (${invoice.reason})</td>
@@ -627,12 +692,12 @@ Object.assign(window.app, {
                 </tr>
                 <tr style="border-bottom: 1px solid #f1f5f9;">
                     <td style="padding: 8px 0; color: #0f172a;">Pharmacy / Medicines</td>
-                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.medicineCost).toFixed(2)}</td>
+                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.medicinecost).toFixed(2)}</td>
                 </tr>
             `;
 
             // Totals
-            const subtotal = Number(invoice.consultationFee) + Number(invoice.treatmentCost) + Number(invoice.medicineCost);
+            const subtotal = Number(invoice.consultationfee) + Number(invoice.treatmentCost) + Number(invoice.medicinecost);
             const tax = Number(invoice.tax);
             const total = Number(invoice.total);
 

@@ -302,16 +302,35 @@ app.get('/api/appointments', async (req, res) => {
         .order('date_time', { ascending: true });
 
     if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
+
+    const normalized = (data || []).map(a => ({
+        ...a,
+        label: a.label || 'New',
+        status: a.status || 'Scheduled'
+    }));
+
+    res.json(normalized);
 });
 
 app.post('/api/appointments', async (req, res) => {
-    const { id, petid, vetname, date_time, reason, status } = req.body;
+    const { id, petid, vetname, date_time, reason, status, label, outcome, outcome_notes } = req.body;
     if (!petid || !vetname || !date_time || !reason || !status) {
         return res.status(400).json({ error: 'Required fields missing.' });
     }
 
     const aId = id || 'a-' + Date.now();
+    const finalLabel = label || 'New';
+
+    const fullRecord = {
+        petid,
+        vetname,
+        date_time,
+        reason,
+        status,
+        label: finalLabel
+    };
+    if (outcome) fullRecord.outcome = outcome;
+    if (outcome_notes) fullRecord.outcome_notes = outcome_notes;
 
     const { data: existing } = await supabase
         .from('appointments')
@@ -320,17 +339,32 @@ app.post('/api/appointments', async (req, res) => {
         .single();
 
     if (existing) {
-        const { error } = await supabase
+        let { error } = await supabase
             .from('appointments')
-            .update({ petid, vetname, date_time, reason, status })
+            .update(fullRecord)
             .eq('id', aId);
+
+        if (error && (error.code === 'PGRST204' || (error.message && error.message.includes('column')))) {
+            const fallbackRes = await supabase
+                .from('appointments')
+                .update({ petid, vetname, date_time, reason, status })
+                .eq('id', aId);
+            error = fallbackRes.error;
+        }
 
         if (error) return res.status(500).json({ error: error.message });
         res.json({ message: 'Appointment updated successfully.', id: aId });
     } else {
-        const { error } = await supabase
+        let { error } = await supabase
             .from('appointments')
-            .insert({ id: aId, petid, vetname, date_time, reason, status });
+            .insert({ id: aId, ...fullRecord });
+
+        if (error && (error.code === 'PGRST204' || (error.message && error.message.includes('column')))) {
+            const fallbackRes = await supabase
+                .from('appointments')
+                .insert({ id: aId, petid, vetname, date_time, reason, status });
+            error = fallbackRes.error;
+        }
 
         if (error) return res.status(500).json({ error: error.message });
         res.status(201).json({ message: 'Appointment booked successfully.', id: aId });
@@ -351,13 +385,32 @@ app.put('/api/appointments/:id/cancel', async (req, res) => {
 
 app.put('/api/appointments/:id/complete', async (req, res) => {
     const { id } = req.params;
-    const { error } = await supabase
+    const { status = 'Closed', outcome, outcomeNotes } = req.body || {};
+    const validStatuses = ['Completed', 'Closed', 'Follow-up', 'Referred', 'Deceased'];
+    const finalStatus = validStatuses.includes(status) ? status : 'Closed';
+
+    const updatePayload = {
+        status: finalStatus,
+        outcome: outcome || finalStatus
+    };
+    if (outcomeNotes) updatePayload.outcome_notes = outcomeNotes;
+
+    let { error } = await supabase
         .from('appointments')
-        .update({ status: 'Completed' })
+        .update(updatePayload)
         .eq('id', id);
 
+    // Fallback if outcome/outcome_notes columns are not yet in Supabase schema
+    if (error && (error.code === 'PGRST204' || (error.message && error.message.includes('column')))) {
+        const fallbackRes = await supabase
+            .from('appointments')
+            .update({ status: finalStatus })
+            .eq('id', id);
+        error = fallbackRes.error;
+    }
+
     if (error) return res.status(500).json({ error: error.message });
-    res.json({ message: 'Appointment status updated to Completed.' });
+    res.json({ message: `Appointment status updated to ${finalStatus}.`, status: finalStatus });
 });
 
 app.delete('/api/appointments/:id', async (req, res) => {
@@ -421,7 +474,7 @@ app.post('/api/treatments', async (req, res) => {
             // Update associated invoice (recalculates fees)
             const { error: iErr } = await supabase
                 .from('invoices')
-                .update({ petid, date_time, treatmentCost: cost, medicineCost: medsCost, tax, total, reason: diagnosis })
+                .update({ petid, date_time, treatmentCost: cost, medicinecost: medsCost, tax, total, reason: diagnosis })
                 .eq('treatmentId', tId);
 
             if (iErr) throw iErr;
@@ -442,13 +495,13 @@ app.post('/api/treatments', async (req, res) => {
                     treatmentId: tId,
                     petid,
                     date_time,
-                    consultationFee: baseConsultation,
+                    consultationfee: baseConsultation,
                     treatmentCost: cost,
-                    medicineCost: medsCost,
+                    medicinecost: medsCost,
                     tax,
                     total,
                     status: 'Pending',
-                    paymentMethod: 'Pending',
+                    paymentmethod: 'Pending',
                     reason: diagnosis
                 });
 
@@ -506,7 +559,7 @@ app.put('/api/invoices/:id/pay', async (req, res) => {
     const { id } = req.params;
     const { error } = await supabase
         .from('invoices')
-        .update({ status: 'Paid', paymentMethod: 'Card' })
+        .update({ status: 'Paid', paymentmethod: 'Card' })
         .eq('id', id);
 
     if (error) return res.status(500).json({ error: error.message });

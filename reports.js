@@ -24,7 +24,7 @@ app.reports = {
         }
 
         // Completed Consultations
-        const completedConsults = appointments.filter(a => a.status === 'Completed').length;
+        const completedConsults = appointments.filter(a => ['Completed', 'Closed', 'Follow-up', 'Referred', 'Deceased'].includes(a.status)).length;
         const consultsCard = document.getElementById('rep-total-consults');
         if (consultsCard) {
             consultsCard.textContent = completedConsults;
