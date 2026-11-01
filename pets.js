@@ -252,38 +252,86 @@ app.pets = {
             });
         }
 
-        // Render vaccination histories from treatments (where diagnosis was "Vaccine" or similar) OR from custom tracker
-        // Since it's Phase 1, we can query mock vaccine lines
+        // Render vaccination & deworming schedule
         const vaccContainer = document.getElementById('pd-vaccinations');
         vaccContainer.innerHTML = '';
-        
+
+        const petVaccs = (app.db.get('vaccinations') || []).filter(v => v.petid === pet.id);
         const vaccineTreatments = petTreatments.filter(t => 
             String(t.diagnosis || '').toLowerCase().includes('vacc') ||
             String(t.medications || '').toLowerCase().includes('vacc') ||
-            String(t.diagnosis || '').toLowerCase().includes('shot')
+            String(t.diagnosis || '').toLowerCase().includes('shot') ||
+            String(t.diagnosis || '').toLowerCase().includes('deworm')
         );
 
-        if (vaccineTreatments.length === 0) {
-            if (pet.vaccination === 'Up-to-date') {
-                vaccContainer.innerHTML = `
-                    <div class="vaccination-row">
-                        <div class="vacc-info">
-                            <h5>Core Vaccination Cycle (Initial)</h5>
-                            <p>Administered before registration</p>
+        // Header button to schedule directly for this pet
+        const actionRow = document.createElement('div');
+        actionRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--color-border);';
+        actionRow.innerHTML = `
+            <span style="font-size:0.875rem; color:var(--color-text-muted); font-weight:500;">Total Records: ${petVaccs.length + vaccineTreatments.length}</span>
+            <button class="primary-btn btn-sm" id="btn-pd-add-vacc">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Schedule Vaccine / Deworming
+            </button>
+        `;
+        vaccContainer.appendChild(actionRow);
+
+        document.getElementById('btn-pd-add-vacc').onclick = () => {
+            if (app.vaccinations && app.vaccinations.openModal) {
+                app.vaccinations.openModal(null, pet.id);
+            }
+        };
+
+        if (petVaccs.length === 0 && vaccineTreatments.length === 0) {
+            const emptyEl = document.createElement('div');
+            emptyEl.className = 'empty-state';
+            emptyEl.innerHTML = pet.vaccination === 'Up-to-date' 
+                ? 'Core cycle recorded as Up-to-date at registration. No specific scheduled doses yet.' 
+                : 'No vaccination or deworming records scheduled yet.';
+            vaccContainer.appendChild(emptyEl);
+        } else {
+            // Render structured records
+            petVaccs.forEach(v => {
+                const row = document.createElement('div');
+                row.className = 'vaccination-row';
+                const isDeworm = v.type === 'Deworming';
+                const statusColor = v.status === 'Administered' ? 'var(--color-success)' : (new Date(v.due_date) < new Date() ? 'var(--color-danger)' : 'var(--color-primary)');
+                const statusBg = v.status === 'Administered' ? 'var(--color-success-soft)' : (new Date(v.due_date) < new Date() ? 'var(--color-danger-soft)' : 'var(--color-primary-soft)');
+                
+                row.innerHTML = `
+                    <div class="vacc-info">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:1rem;">${isDeworm ? '💊' : '💉'}</span>
+                            <strong style="color:var(--color-text-main);">${v.name}</strong>
+                            <span class="badge vac-label-badge badge-${(v.label || 'primary').toLowerCase()}">${v.label || 'Primary'}</span>
+                            <span class="badge frequency-badge">${v.frequency || 'Annual'}</span>
                         </div>
-                        <span class="badge" style="background-color: var(--color-success-soft); color: var(--color-success)">Active</span>
+                        <p style="margin-top:4px; font-size:0.8rem; color:var(--color-text-muted);">
+                            Due: <strong>${v.due_date || 'N/A'}</strong> ${v.administered_date ? `| Administered: <strong>${v.administered_date}</strong>` : ''} 
+                            ${v.batch_number ? `| Batch: ${v.batch_number}` : ''}
+                        </p>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="badge" style="background-color:${statusBg}; color:${statusColor}">${v.status}</span>
+                        ${v.status !== 'Administered' ? `
+                            <button class="primary-btn btn-sm" onclick="app.vaccinations.markAdministered('${v.id}')" title="Mark this dose as administered">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><polyline points="20 6 9 17 4 12"/></svg>
+                                Administer
+                            </button>
+                        ` : ''}
                     </div>
                 `;
-            } else {
-                vaccContainer.innerHTML = '<div class="empty-state">No vaccination administration records found.</div>';
-            }
-        } else {
+                vaccContainer.appendChild(row);
+            });
+
+            // Render legacy treatment lines if any
             vaccineTreatments.forEach(vt => {
                 const row = document.createElement('div');
                 row.className = 'vaccination-row';
+                row.style.opacity = '0.85';
                 row.innerHTML = `
                     <div class="vacc-info">
-                        <h5>${vt.diagnosis}</h5>
+                        <h5>${vt.diagnosis} (Visit Record)</h5>
                         <p>Prescribed: ${vt.medications}</p>
                     </div>
                     <span class="badge" style="background-color: var(--color-success-soft); color: var(--color-success)">

@@ -2261,3 +2261,50 @@ html[data-theme="light"] .moon-icon { display: block; }
     fill: var(--text-main);
 }
 
+
+
+/* Vaccination & Deworming Styles */
+.vac-label-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: var(--border-radius-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.vac-label-badge.primary {
+    background: rgba(99, 102, 241, 0.15);
+    color: #6366f1;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.vac-label-badge.secondary {
+    background: rgba(14, 165, 233, 0.15);
+    color: #0ea5e9;
+    border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.vac-label-badge.booster {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.vac-label-badge.annual {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.frequency-badge {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-main);
+    padding: 3px 8px;
+    border-radius: var(--border-radius-pill);
+}

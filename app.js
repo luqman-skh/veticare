@@ -33,18 +33,20 @@ Object.assign(window.app, {
             pets: [],
             appointments: [],
             treatments: [],
-            invoices: []
+            invoices: [],
+            vaccinations: []
         },
 
         // Helper wrapper to fetch table data from the backend
         loadState: async () => {
             try {
-                const [owners, pets, appointments, treatments, invoices] = await Promise.all([
+                const [owners, pets, appointments, treatments, invoices, vaccinations] = await Promise.all([
                     fetch(`${app.db.apiURL}/owners`).then(r => r.json()),
                     fetch(`${app.db.apiURL}/pets`).then(r => r.json()),
                     fetch(`${app.db.apiURL}/appointments`).then(r => r.json()),
                     fetch(`${app.db.apiURL}/treatments`).then(r => r.json()),
-                    fetch(`${app.db.apiURL}/invoices`).then(r => r.json())
+                    fetch(`${app.db.apiURL}/invoices`).then(r => r.json()),
+                    fetch(`${app.db.apiURL}/vaccinations`).then(r => r.json()).catch(() => [])
                 ]);
 
                 // Normalize pets metadata if present in notes fallback
@@ -68,7 +70,7 @@ Object.assign(window.app, {
                     return p;
                 });
 
-                app.db.state = { owners, pets: normalizedPets, appointments, treatments, invoices };
+                app.db.state = { owners, pets: normalizedPets, appointments, treatments, invoices, vaccinations: Array.isArray(vaccinations) ? vaccinations : [] };
             } catch (err) {
                 console.error('Error fetching state from DBMS backend:', err);
             }
@@ -166,6 +168,10 @@ Object.assign(window.app, {
                 actionBtn.style.display = 'inline-flex';
                 actionText.textContent = 'Book Slot';
                 actionBtn.onclick = () => app.ui.openAppointmentModal();
+            } else if (viewName === 'vaccinations') {
+                actionBtn.style.display = 'inline-flex';
+                actionText.textContent = 'Schedule Dose';
+                actionBtn.onclick = () => app.vaccinations.openModal();
             } else {
                 actionBtn.style.display = 'none';
             }
@@ -191,6 +197,8 @@ Object.assign(window.app, {
                 app.appointments.renderAgenda();
             } else if (viewName === 'treatments') {
                 app.treatments.renderList();
+            } else if (viewName === 'vaccinations') {
+                app.vaccinations.renderList();
             } else if (viewName === 'billing') {
                 app.billing.renderList();
             } else if (viewName === 'reports') {
@@ -453,6 +461,19 @@ Object.assign(window.app, {
             if (dashRecordBtn) {
                 dashRecordBtn.onclick = () => app.ui.openTreatmentModal();
             }
+
+            // Vaccination & Deworming modal handlers
+            const vacForm = document.getElementById('vaccination-form');
+            if (vacForm) {
+                vacForm.onsubmit = (e) => {
+                    e.preventDefault();
+                    app.vaccinations.save();
+                };
+            }
+            const closeVacBtn = document.getElementById('close-vaccination-modal');
+            if (closeVacBtn) closeVacBtn.onclick = () => app.ui.closeAllModals();
+            const cancelVacBtn = document.getElementById('cancel-vaccination-modal');
+            if (cancelVacBtn) cancelVacBtn.onclick = () => app.ui.closeAllModals();
         },
 
         setTheme: (theme) => {
@@ -477,6 +498,10 @@ Object.assign(window.app, {
             if (compForm) compForm.reset();
             const compApptId = document.getElementById('completion-appt-id');
             if (compApptId) compApptId.value = '';
+            const vacForm = document.getElementById('vaccination-form');
+            if (vacForm) vacForm.reset();
+            const vacId = document.getElementById('vac-id');
+            if (vacId) vacId.value = '';
         },
 
         openAppointmentModal: (apptData = null, preselectedDate = null, preselectedPetId = null, preselectedLabel = 'New', prefilledReason = null, preselectedVet = null) => {

@@ -127,6 +127,9 @@ app.delete('/api/owners/:id', async (req, res) => {
             await supabase.from('appointments').delete().in('petid', petIds);
             await supabase.from('appointments').delete().in('petId', petIds);
 
+            // Delete vaccinations for these pets
+            await supabase.from('vaccinations').delete().in('petid', petIds);
+
             // Delete pets
             await supabase.from('pets').delete().in('id', petIds);
         }
@@ -279,6 +282,8 @@ app.delete('/api/pets/:id', async (req, res) => {
 
         await supabase.from('appointments').delete().eq('petid', id);
         await supabase.from('appointments').delete().eq('petId', id);
+
+        await supabase.from('vaccinations').delete().eq('petid', id);
 
         const { error: petErr } = await supabase
             .from('pets')
@@ -578,6 +583,134 @@ app.delete('/api/invoices/:id', async (req, res) => {
         res.json({ message: 'Invoice deleted successfully.' });
     } catch (err) {
         console.error('Error deleting invoice:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- Vaccinations & Deworming API ---
+app.get('/api/vaccinations', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('vaccinations')
+            .select('*')
+            .order('due_date', { ascending: true });
+
+        if (error) {
+            // Graceful fallback if table not yet created on Supabase
+            return res.json([]);
+        }
+        res.json(data || []);
+    } catch (err) {
+        res.json([]);
+    }
+});
+
+app.post('/api/vaccinations', async (req, res) => {
+    const {
+        id,
+        petid,
+        type = 'Vaccination',
+        name,
+        label = 'Primary',
+        frequency = 'Annual',
+        custom_interval_days,
+        due_date,
+        administered_date,
+        status = 'Scheduled',
+        vetname,
+        batch_number,
+        notes
+    } = req.body;
+
+    if (!petid || !name || !due_date) {
+        return res.status(400).json({ error: 'Required fields missing: pet, name, and due date are mandatory.' });
+    }
+
+    const vId = id || 'v-' + Date.now();
+    const parsedCustomDays = (custom_interval_days !== undefined && custom_interval_days !== null && custom_interval_days !== '' && !isNaN(custom_interval_days))
+        ? parseInt(custom_interval_days, 10)
+        : null;
+
+    const record = {
+        petid,
+        type,
+        name,
+        label,
+        frequency,
+        custom_interval_days: parsedCustomDays,
+        due_date,
+        administered_date: administered_date || null,
+        status,
+        vetname: vetname || null,
+        batch_number: batch_number || null,
+        notes: notes || null
+    };
+
+    try {
+        const { data: existing } = await supabase
+            .from('vaccinations')
+            .select('id')
+            .eq('id', vId)
+            .single();
+
+        if (existing) {
+            const { error } = await supabase
+                .from('vaccinations')
+                .update(record)
+                .eq('id', vId);
+
+            if (error) throw error;
+            res.json({ message: 'Record updated successfully.', id: vId });
+        } else {
+            const { error } = await supabase
+                .from('vaccinations')
+                .insert({ id: vId, ...record });
+
+            if (error) throw error;
+            res.status(201).json({ message: 'Dose scheduled successfully.', id: vId });
+        }
+    } catch (err) {
+        console.error('Error saving vaccination/deworming record:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/vaccinations/:id/administer', async (req, res) => {
+    const { id } = req.params;
+    const { administered_date = new Date().toISOString().split('T')[0], vetname, batch_number } = req.body || {};
+    try {
+        const updatePayload = {
+            status: 'Administered',
+            administered_date
+        };
+        if (vetname) updatePayload.vetname = vetname;
+        if (batch_number) updatePayload.batch_number = batch_number;
+
+        const { error } = await supabase
+            .from('vaccinations')
+            .update(updatePayload)
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ message: 'Dose marked as administered.', id });
+    } catch (err) {
+        console.error('Error updating dose administration:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/vaccinations/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { error } = await supabase
+            .from('vaccinations')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ message: 'Record deleted successfully.' });
+    } catch (err) {
+        console.error('Error deleting vaccination record:', err);
         res.status(500).json({ error: err.message });
     }
 });
