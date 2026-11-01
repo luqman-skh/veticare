@@ -668,7 +668,54 @@ html[data-theme="light"] .moon-icon { display: block; }
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: transform var(--transition-fast);
+    transition: all var(--transition-fast);
+}
+
+.schedule-item.completed,
+.schedule-item.closed {
+    border-left-color: var(--color-success);
+    background-color: rgba(16, 185, 129, 0.04);
+}
+
+.schedule-item.completed .sch-time,
+.schedule-item.closed .sch-time {
+    color: var(--color-success);
+}
+
+.schedule-item.follow-up {
+    border-left-color: #0ea5e9;
+    background-color: rgba(14, 165, 233, 0.04);
+}
+
+.schedule-item.follow-up .sch-time {
+    color: #0ea5e9;
+}
+
+.schedule-item.referred {
+    border-left-color: #f59e0b;
+    background-color: rgba(245, 158, 11, 0.04);
+}
+
+.schedule-item.referred .sch-time {
+    color: #f59e0b;
+}
+
+.schedule-item.deceased {
+    border-left-color: #64748b;
+    opacity: 0.75;
+}
+
+.schedule-item.deceased .sch-time {
+    color: #64748b;
+}
+
+.schedule-item.cancelled {
+    border-left-color: var(--color-danger);
+    opacity: 0.6;
+}
+
+.schedule-item.cancelled .sch-time {
+    color: var(--color-danger);
 }
 
 .schedule-item:hover {

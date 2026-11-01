@@ -445,6 +445,8 @@ app.appointments = {
             app.appointments.renderAgenda();
             if (app.router.activeView === 'dashboard') {
                 app.dashboard.render();
+            } else if (app.router.activeView === 'reports') {
+                app.reports.render();
             }
 
             // If auto followup requested, immediately trigger follow-up booking
@@ -492,6 +494,8 @@ app.appointments = {
             app.appointments.renderAgenda();
             if (app.router.activeView === 'dashboard') {
                 app.dashboard.render();
+            } else if (app.router.activeView === 'reports') {
+                app.reports.render();
             }
         } catch (err) {
             console.error('Error deleting appointment:', err);

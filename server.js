@@ -446,7 +446,7 @@ app.get('/api/treatments', async (req, res) => {
 });
 
 app.post('/api/treatments', async (req, res) => {
-    const { id, appointmentid, petid, date_time, symptoms, diagnosis, medications, vaccinegiven, cost, notes } = req.body;
+    const { id, appointmentid, petid, date_time, symptoms, diagnosis, medications, vaccinegiven, cost, notes, payment_status, payment_method } = req.body;
     if (!petid || !date_time || !symptoms || !diagnosis || isNaN(cost)) {
         return res.status(400).json({ error: 'Required fields missing or invalid.' });
     }
@@ -477,9 +477,14 @@ app.post('/api/treatments', async (req, res) => {
             if (tErr) throw tErr;
 
             // Update associated invoice (recalculates fees)
+            const invUpdateData = { petid, date_time, treatmentcost: cost, medicinecost: medsCost, tax, total, reason: diagnosis };
+            if (payment_status) {
+                invUpdateData.status = payment_status;
+                invUpdateData.paymentmethod = payment_method || (payment_status === 'Pending' ? 'Pending' : 'Card');
+            }
             const { error: iErr } = await supabase
                 .from('invoices')
-                .update({ petid, date_time, treatmentcost: cost, medicinecost: medsCost, tax, total, reason: diagnosis })
+                .update(invUpdateData)
                 .eq('treatmentid', tId);
 
             if (iErr) throw iErr;
@@ -491,8 +496,10 @@ app.post('/api/treatments', async (req, res) => {
 
             if (tErr) throw tErr;
 
-            // Insert new pending invoice
+            // Insert new invoice (defaulting to Paid unless specified)
             const invId = 'INV-' + (Math.floor(Math.random() * 9000) + 1000);
+            const finalStatus = payment_status || 'Paid';
+            const finalMethod = payment_method || (finalStatus === 'Pending' ? 'Pending' : 'Card');
             const { error: iErr } = await supabase
                 .from('invoices')
                 .insert({
@@ -505,8 +512,8 @@ app.post('/api/treatments', async (req, res) => {
                     medicinecost: medsCost,
                     tax,
                     total,
-                    status: 'Pending',
-                    paymentmethod: 'Pending',
+                    status: finalStatus,
+                    paymentmethod: finalMethod,
                     reason: diagnosis
                 });
 

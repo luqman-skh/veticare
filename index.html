@@ -139,17 +139,10 @@
                             <div class="metric-info">
                                 <span class="metric-label">Appointments Today</span>
                                 <h3 class="metric-value" id="stat-appointments">0</h3>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;" id="stat-appointments-sub">0 finished • 0 pending</div>
                             </div>
                         </div>
-                        <div class="metric-card">
-                            <div class="metric-icon bg-success-soft">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-label">Today's Revenue</span>
-                                <h3 class="metric-value" id="stat-revenue">$0.00</h3>
-                            </div>
-                        </div>
+
                     </div>
 
                     <!-- Dashboard Layout Details -->
@@ -609,8 +602,9 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             </div>
                             <div class="metric-info">
-                                <span class="metric-label">Total Invoice Revenue</span>
+                                <span class="metric-label">Total Revenue</span>
                                 <h3 class="metric-value" id="rep-total-revenue">$0.00</h3>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;" id="rep-revenue-breakdown">Paid: $0.00 • Pending: $0.00</div>
                             </div>
                         </div>
                         <div class="metric-card">
@@ -1017,6 +1011,23 @@
                     <div class="form-group">
                         <label for="treatment-cost" class="required">Treatment Cost ($)</label>
                         <input type="number" step="0.01" min="0" id="treatment-cost" placeholder="75.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="treatment-payment-status">Payment Status</label>
+                        <select id="treatment-payment-status">
+                            <option value="Paid" selected>Paid (Collected)</option>
+                            <option value="Pending">Pending (Unpaid Invoice)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="treatment-payment-method">Payment Method</label>
+                        <select id="treatment-payment-method">
+                            <option value="Card" selected>Card</option>
+                            <option value="Cash">Cash</option>
+                            <option value="UPI / Online">UPI / Online</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Pending">Pending</option>
+                        </select>
                     </div>
                     <div class="form-group col-span-2">
                         <label for="treatment-notes">Internal Notes & Clinical Comments</label>

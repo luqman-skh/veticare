@@ -107,6 +107,8 @@ app.treatments = {
         const vaccinegiven = document.getElementById('treatment-vaccine').value;
         const cost = parseFloat(document.getElementById('treatment-cost').value);
         const notes = document.getElementById('treatment-notes').value.trim();
+        const payment_status = document.getElementById('treatment-payment-status')?.value || 'Paid';
+        const payment_method = document.getElementById('treatment-payment-method')?.value || 'Card';
 
         if (!petid || !date_time || !symptoms || !diagnosis || isNaN(cost)) {
             alert('Please fill out all required fields.');
@@ -123,7 +125,9 @@ app.treatments = {
             medications: medications || undefined,
             vaccinegiven: vaccinegiven || undefined,
             cost,
-            notes: notes || undefined
+            notes: notes || undefined,
+            payment_status,
+            payment_method
         };
 
         try {
@@ -147,6 +151,8 @@ app.treatments = {
                 app.dashboard.render();
             } else if (app.router.activeView === 'appointments') {
                 app.appointments.renderAgenda();
+            } else if (app.router.activeView === 'reports') {
+                app.reports.render();
             }
         } catch (err) {
             console.error('Error saving clinical treatment:', err);

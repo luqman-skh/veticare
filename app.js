@@ -70,7 +70,14 @@ Object.assign(window.app, {
                     return p;
                 });
 
-                app.db.state = { owners, pets: normalizedPets, appointments, treatments, invoices, vaccinations: Array.isArray(vaccinations) ? vaccinations : [] };
+                app.db.state = {
+                    owners: Array.isArray(owners) ? owners : [],
+                    pets: normalizedPets,
+                    appointments: Array.isArray(appointments) ? appointments : [],
+                    treatments: Array.isArray(treatments) ? treatments : [],
+                    invoices: Array.isArray(invoices) ? invoices : [],
+                    vaccinations: Array.isArray(vaccinations) ? vaccinations : []
+                };
             } catch (err) {
                 console.error('Error fetching state from DBMS backend:', err);
             }
@@ -225,23 +232,20 @@ Object.assign(window.app, {
             // Stats computations
             const todayStr = new Date().toISOString().split('T')[0];
             const todayAppointments = appointments.filter(a => a.date_time.startsWith(todayStr));
-            
-            // Calculate today's revenue (from treatments recorded today, plus general consultation fee $50 for finished appointments)
-            const completedToday = appointments.filter(a => a.date_time.startsWith(todayStr) && ['Completed', 'Closed', 'Follow-up', 'Referred', 'Deceased'].includes(a.status));
-            let todayRevenue = completedToday.length * 50; // base fee
-            
-            treatments.forEach(t => {
-                if (t.date_time.startsWith(todayStr)) {
-                    todayRevenue += Number(t.cost || 0);
-                }
-            });
+            const completedCount = todayAppointments.filter(a => ['Completed', 'Closed', 'Follow-up', 'Referred', 'Deceased'].includes(a.status)).length;
+            const pendingCount = todayAppointments.length - completedCount;
 
             // Update UI Elements
             document.getElementById('stat-owners').textContent = owners.length;
             document.getElementById('stat-pets').textContent = pets.length;
             document.getElementById('stat-appointments').textContent = todayAppointments.length;
-            document.getElementById('today-apt-count').textContent = todayAppointments.length;
-            document.getElementById('stat-revenue').textContent = `$${todayRevenue.toFixed(2)}`;
+            const aptSub = document.getElementById('stat-appointments-sub');
+            if (aptSub) {
+                aptSub.textContent = `${completedCount} finished • ${pendingCount} pending`;
+            }
+            document.getElementById('today-apt-count').textContent = pendingCount > 0 ? `${pendingCount} upcoming (${completedCount} completed)` : `${todayAppointments.length} (${completedCount} completed)`;
+            const statRevEl = document.getElementById('stat-revenue');
+            if (statRevEl) statRevEl.style.display = 'none';
 
             // Render Today's Schedule List
             const scheduleContainer = document.getElementById('dashboard-schedule');
@@ -257,14 +261,45 @@ Object.assign(window.app, {
                     const pet = pets.find(p => p.id === apt.petid) || { name: 'Unknown Patient' };
                     const owner = owners.find(o => o.id === pet.ownerid) || { name: 'Unknown Owner' };
                     const time = apt.date_time.split('T')[1];
-                    
-                    const item = document.createElement('div');
-                    item.className = 'schedule-item';
-                    item.onclick = () => window.location.hash = `pet-details/${pet.id}`;
+                    const status = apt.status || 'Scheduled';
+                    const statusClass = status.toLowerCase().replace(/\s+/g, '-');
                     const labelVal = apt.label || 'New';
                     const labelClass = labelVal.toLowerCase().replace(/\s+/g, '-');
+
+                    const isFinished = ['Completed', 'Closed', 'Follow-up', 'Referred', 'Deceased'].includes(status);
+                    const canContinue = ['Closed', 'Referred', 'Completed', 'Follow-up'].includes(status);
+
+                    const item = document.createElement('div');
+                    item.className = `schedule-item ${statusClass}`;
+                    item.style.cursor = 'pointer';
+                    item.onclick = () => window.location.hash = `pet-details/${pet.id}`;
+
+                    let actionBtnHTML = '';
+                    if (!isFinished && status !== 'Cancelled') {
+                        actionBtnHTML = `
+                            <button class="primary-btn btn-sm" style="padding: 4px 10px; font-size: 11px;" onclick="event.stopPropagation(); app.appointments.openCompletionModal('${apt.id}')" title="Complete Appointment">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon" style="width: 12px; height: 12px;"><polyline points="20 6 9 17 4 12"/></svg>
+                                Complete
+                            </button>
+                        `;
+                    } else if (canContinue && status !== 'Deceased') {
+                        actionBtnHTML = `
+                            <button class="secondary-btn btn-sm btn-followup" style="padding: 4px 10px; font-size: 11px;" onclick="event.stopPropagation(); app.appointments.continueAsFollowup('${apt.id}')" title="Continue as Follow-up">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 11px; height: 11px;"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                                Follow-up
+                            </button>
+                        `;
+                    }
+
+                    const outcomeNoteHTML = (apt.outcome_notes && isFinished)
+                        ? `<div style="font-size: 11px; color: var(--color-primary-light); margin-top: 2px;">Note: <em>${apt.outcome_notes}</em></div>`
+                        : '';
+
                     item.innerHTML = `
-                        <div class="sch-time">${time}</div>
+                        <div class="sch-time">
+                            ${time}
+                            ${isFinished ? `<div style="font-size: 10px; font-weight: 600; color: currentColor; opacity: 0.9;">✓ ${status}</div>` : ''}
+                        </div>
                         <div class="sch-info">
                             <div class="sch-pet-name" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                 ${pet.name} 
@@ -275,9 +310,14 @@ Object.assign(window.app, {
                                     ${labelVal}
                                 </span>
                             </div>
-                            <div class="sch-owner">Owner: ${owner.name}</div>
+                            <div class="sch-owner">Owner: ${owner.name} • Dr. ${apt.vetname || 'Staff'}</div>
+                            ${outcomeNoteHTML}
                         </div>
-                        <span class="sch-type">${apt.reason}</span>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                            <span class="sch-type">${apt.reason}</span>
+                            <span class="status-badge ${statusClass}">${status}</span>
+                            ${actionBtnHTML}
+                        </div>
                     `;
                     scheduleContainer.appendChild(item);
                 });
@@ -502,6 +542,11 @@ Object.assign(window.app, {
             if (vacForm) vacForm.reset();
             const vacId = document.getElementById('vac-id');
             if (vacId) vacId.value = '';
+            
+            // Refresh dashboard schedule list if active
+            if (app.router && app.router.activeView === 'dashboard' && app.dashboard && app.dashboard.render) {
+                app.dashboard.render();
+            }
         },
 
         openAppointmentModal: (apptData = null, preselectedDate = null, preselectedPetId = null, preselectedLabel = 'New', prefilledReason = null, preselectedVet = null) => {
@@ -585,7 +630,23 @@ Object.assign(window.app, {
                 document.getElementById('treatment-vaccine').value = treatmentData.vaccinegiven || '';
                 document.getElementById('treatment-cost').value = treatmentData.cost;
                 document.getElementById('treatment-notes').value = treatmentData.notes || '';
+                
+                // Prefill invoice payment status if existing invoice found
+                const invoices = app.db.get('invoices') || [];
+                const inv = invoices.find(i => i.treatmentid === treatmentData.id);
+                if (document.getElementById('treatment-payment-status')) {
+                    document.getElementById('treatment-payment-status').value = inv ? (inv.status || 'Paid') : 'Paid';
+                }
+                if (document.getElementById('treatment-payment-method')) {
+                    document.getElementById('treatment-payment-method').value = inv ? (inv.paymentmethod || 'Card') : 'Card';
+                }
             } else {
+                if (document.getElementById('treatment-payment-status')) {
+                    document.getElementById('treatment-payment-status').value = 'Paid';
+                }
+                if (document.getElementById('treatment-payment-method')) {
+                    document.getElementById('treatment-payment-method').value = 'Card';
+                }
                 title.textContent = 'Record Clinic Visit & Treatments';
                 
                 // Prefills

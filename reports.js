@@ -13,14 +13,41 @@ app.reports = {
         const owners = app.db.get('owners') || [];
 
         // 1. Calculate top summary cards
-        // Total Invoice Revenue (Paid Invoices only)
-        const totalRevenue = invoices
-            .filter(inv => inv.status === 'Paid')
-            .reduce((sum, inv) => sum + Number(inv.total), 0);
-        
+        // Total, Paid, and Pending Revenue
+        let paidRevenue = 0;
+        let pendingRevenue = 0;
+        let totalRevenue = 0;
+
+        const invList = Array.isArray(invoices) ? invoices : [];
+        const treatList = Array.isArray(treatments) ? treatments : [];
+
+        if (invList.length > 0) {
+            invList.forEach(inv => {
+                const total = Number(inv.total || (Number(inv.treatmentcost || 0) + Number(inv.medicinecost || 0) + Number(inv.consultationfee || 0) + Number(inv.tax || 0)) || 0);
+                totalRevenue += total;
+                const status = String(inv.status || '').toLowerCase();
+                if (status === 'paid') {
+                    paidRevenue += total;
+                } else {
+                    pendingRevenue += total;
+                }
+            });
+        } else if (treatList.length > 0) {
+            // Fallback from clinical treatments if invoices table not yet populated
+            treatList.forEach(t => {
+                const cost = Number(t.cost || 0) + 50.0;
+                totalRevenue += cost;
+                paidRevenue += cost;
+            });
+        }
+
         const revCard = document.getElementById('rep-total-revenue');
         if (revCard) {
             revCard.textContent = `$${totalRevenue.toFixed(2)}`;
+        }
+        const revBreakdown = document.getElementById('rep-revenue-breakdown');
+        if (revBreakdown) {
+            revBreakdown.textContent = `Paid: $${paidRevenue.toFixed(2)} • Pending: $${pendingRevenue.toFixed(2)}`;
         }
 
         // Completed Consultations
@@ -117,11 +144,26 @@ app.reports = {
             dayLabels.push(d.toLocaleDateString([], { weekday: 'short' }));
         }
 
-        // Aggregate daily paid revenue
+        const invList = Array.isArray(invoices) ? invoices : [];
+        const treatList = Array.isArray(app.db.get('treatments')) ? app.db.get('treatments') : [];
+
+        // Aggregate daily revenue safely supporting ISO timestamps, dateTime and date_time
         const dailyRevenue = days.map(day => {
-            return invoices
-                .filter(inv => inv.status === 'Paid' && inv.date_time.startsWith(day))
-                .reduce((sum, inv) => sum + Number(inv.total), 0);
+            if (invList.length > 0) {
+                return invList
+                    .filter(inv => {
+                        const raw = String(inv.date_time || inv.dateTime || '');
+                        return raw.startsWith(day);
+                    })
+                    .reduce((sum, inv) => {
+                        const total = Number(inv.total || (Number(inv.treatmentcost || 0) + Number(inv.medicinecost || 0) + Number(inv.consultationfee || 0) + Number(inv.tax || 0)) || 0);
+                        return sum + total;
+                    }, 0);
+            } else {
+                return treatList
+                    .filter(t => String(t.date_time || '').startsWith(day))
+                    .reduce((sum, t) => sum + Number(t.cost || 0) + 50.0, 0);
+            }
         });
 
         // Set dimensions for the coordinate grid
