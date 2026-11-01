@@ -44,7 +44,7 @@
                 </a>
                 <a href="#treatments" class="nav-item" data-view="treatments">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><rect x="2" y="9" width="20" height="6" rx="2"/></svg>
-                    <span>Treatments</span>
+                    <span>Medical Records</span>
                 </a>
                 <a href="#billing" class="nav-item" data-view="billing">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -82,7 +82,7 @@
                     </button>
                     <button class="primary-btn" id="header-action-btn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        <span id="header-action-text">Add Owner</span>
+                        <span id="header-action-text">Record Visit</span>
                     </button>
                 </div>
             </header>
@@ -154,7 +154,13 @@
                         <div class="panel-card col-span-2">
                             <div class="panel-card-header">
                                 <h3>Today's Schedule</h3>
-                                <button class="text-btn" onclick="app.router.navigate('appointments')">View All</button>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button class="primary-btn btn-sm" id="dashboard-record-visit-btn">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                                        Record Visit
+                                    </button>
+                                    <button class="text-btn" onclick="app.router.navigate('appointments')">View All</button>
+                                </div>
                             </div>
                             <div class="panel-card-body">
                                 <div class="schedule-list" id="dashboard-schedule">
@@ -411,10 +417,16 @@
                                     <h3 id="agenda-date-title">Selected Date Agenda</h3>
                                     <p class="text-sm text-muted mt-2" id="agenda-date-subtitle">Agenda list</p>
                                 </div>
-                                <button class="primary-btn btn-sm" id="book-appt-btn">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                    Book Slot
-                                </button>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button class="secondary-btn btn-sm" id="btn-appt-record-visit">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                                        Record Visit
+                                    </button>
+                                    <button class="primary-btn btn-sm" id="book-appt-btn">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                        Book Slot
+                                    </button>
+                                </div>
                             </div>
                             <div class="panel-card-body">
                                 <div class="agenda-timeline" id="agenda-list">
@@ -432,12 +444,7 @@
                             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                             <input type="text" id="treatment-search" class="select-input" style="border-radius: var(--border-radius-pill); padding-left: 44px; width: 320px;" placeholder="Search medical logs, diagnosis, drugs...">
                         </div>
-                        <div class="filter-group">
-                            <button class="primary-btn btn-sm" id="btn-new-treatment">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                Record Visit
-                            </button>
-                        </div>
+
                     </div>
                     
                     <div class="clinical-logs-wrapper">

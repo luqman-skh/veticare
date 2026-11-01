@@ -69,11 +69,18 @@ app.appointments = {
         if (formDate) formDate.onchange = checkInputsForCollision;
         if (formTime) formTime.onchange = checkInputsForCollision;
 
-        // Hook up Book Slot header action button inside calendar view
+        // Hook up Book Slot & Record Visit header action buttons inside calendar view
         const bookBtn = document.getElementById('book-appt-btn');
         if (bookBtn) {
             bookBtn.onclick = () => {
                 app.ui.openAppointmentModal(null, app.appointments.selectedDateStr);
+            };
+        }
+
+        const apptRecordBtn = document.getElementById('btn-appt-record-visit');
+        if (apptRecordBtn) {
+            apptRecordBtn.onclick = () => {
+                app.ui.openTreatmentModal();
             };
         }
 

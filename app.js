@@ -100,11 +100,14 @@ Object.assign(window.app, {
                 await app.db.loadState();
 
                 // Handle sub-pages (e.g. owner-details, pet-details)
+                const actionBtn = document.getElementById('header-action-btn');
                 if (hash.startsWith('owner-details/')) {
                     const id = hash.split('/')[1];
+                    if (actionBtn) actionBtn.style.display = 'none';
                     app.owners.showDetail(id);
                 } else if (hash.startsWith('pet-details/')) {
                     const id = hash.split('/')[1];
+                    if (actionBtn) actionBtn.style.display = 'none';
                     app.pets.showDetail(id);
                 } else {
                     app.router.navigate(hash, false);
@@ -115,9 +118,12 @@ Object.assign(window.app, {
             const initialHash = window.location.hash.slice(1) || 'dashboard';
             (async () => {
                 await app.db.loadState();
+                const actionBtn = document.getElementById('header-action-btn');
                 if (initialHash.startsWith('owner-details/')) {
+                    if (actionBtn) actionBtn.style.display = 'none';
                     app.owners.showDetail(initialHash.split('/')[1]);
                 } else if (initialHash.startsWith('pet-details/')) {
+                    if (actionBtn) actionBtn.style.display = 'none';
                     app.pets.showDetail(initialHash.split('/')[1]);
                 } else {
                     app.router.navigate(initialHash, false);
@@ -144,7 +150,11 @@ Object.assign(window.app, {
             const actionBtn = document.getElementById('header-action-btn');
             const actionText = document.getElementById('header-action-text');
             
-            if (viewName === 'owners') {
+            if (viewName === 'dashboard') {
+                actionBtn.style.display = 'inline-flex';
+                actionText.textContent = 'Record Visit';
+                actionBtn.onclick = () => app.ui.openTreatmentModal();
+            } else if (viewName === 'owners') {
                 actionBtn.style.display = 'inline-flex';
                 actionText.textContent = 'Add Owner';
                 actionBtn.onclick = () => app.ui.openOwnerModal();
@@ -156,10 +166,6 @@ Object.assign(window.app, {
                 actionBtn.style.display = 'inline-flex';
                 actionText.textContent = 'Book Slot';
                 actionBtn.onclick = () => app.ui.openAppointmentModal();
-            } else if (viewName === 'treatments') {
-                actionBtn.style.display = 'inline-flex';
-                actionText.textContent = 'Record Visit';
-                actionBtn.onclick = () => app.ui.openTreatmentModal();
             } else {
                 actionBtn.style.display = 'none';
             }
@@ -441,6 +447,12 @@ Object.assign(window.app, {
                     }
                 };
             });
+
+            // Dashboard quick Record Visit button
+            const dashRecordBtn = document.getElementById('dashboard-record-visit-btn');
+            if (dashRecordBtn) {
+                dashRecordBtn.onclick = () => app.ui.openTreatmentModal();
+            }
         },
 
         setTheme: (theme) => {

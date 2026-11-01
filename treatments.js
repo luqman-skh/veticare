@@ -193,10 +193,5 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    const newTreatmentBtn = document.getElementById('btn-new-treatment');
-    if (newTreatmentBtn) {
-        newTreatmentBtn.onclick = () => {
-            app.ui.openTreatmentModal();
-        };
-    }
+
 });
