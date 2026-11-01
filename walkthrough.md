@@ -51,13 +51,13 @@ CREATE TABLE IF NOT EXISTS appointments (
 -- 4. Treatments Table (Visits log)
 CREATE TABLE IF NOT EXISTS treatments (
     id TEXT PRIMARY KEY,
-    appointmentId TEXT,
+    appointmentid TEXT,
     petid TEXT NOT NULL,
     date_time TEXT NOT NULL,
     symptoms TEXT NOT NULL,
     diagnosis TEXT NOT NULL,
     medications TEXT,
-    vaccineGiven TEXT,
+    vaccinegiven TEXT,
     cost REAL NOT NULL,
     notes TEXT,
     FOREIGN KEY(petid) REFERENCES pets(id) ON DELETE CASCADE
@@ -66,11 +66,11 @@ CREATE TABLE IF NOT EXISTS treatments (
 -- 5. Invoices Table (Transactions)
 CREATE TABLE IF NOT EXISTS invoices (
     id TEXT PRIMARY KEY,
-    treatmentId TEXT,
+    treatmentid TEXT,
     petid TEXT NOT NULL,
     date_time TEXT NOT NULL,
     consultationfee REAL NOT NULL,
-    treatmentCost REAL NOT NULL,
+    treatmentcost REAL NOT NULL,
     medicinecost REAL NOT NULL,
     tax REAL NOT NULL,
     total REAL NOT NULL,

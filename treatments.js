@@ -51,8 +51,8 @@ app.treatments = {
             card.className = 'clinical-card';
             
             // Generate vaccine indicator if recorded
-            const vaccineBadge = t.vaccineGiven 
-                ? `<span class="badge" style="background-color: var(--color-success-soft); color: var(--color-success); font-size: 11px;">💉 ${t.vaccineGiven} Shot</span>`
+            const vaccineBadge = t.vaccinegiven 
+                ? `<span class="badge" style="background-color: var(--color-success-soft); color: var(--color-success); font-size: 11px;">💉 ${t.vaccinegiven} Shot</span>`
                 : '';
 
             card.innerHTML = `
@@ -104,7 +104,7 @@ app.treatments = {
         const symptoms = document.getElementById('treatment-symptoms').value.trim();
         const diagnosis = document.getElementById('treatment-diagnosis').value.trim();
         const medications = document.getElementById('treatment-meds').value.trim();
-        const vaccineGiven = document.getElementById('treatment-vaccine').value;
+        const vaccinegiven = document.getElementById('treatment-vaccine').value;
         const cost = parseFloat(document.getElementById('treatment-cost').value);
         const notes = document.getElementById('treatment-notes').value.trim();
 
@@ -115,13 +115,13 @@ app.treatments = {
 
         const payload = {
             id: id || undefined,
-            appointmentId: apptId || undefined,
+            appointmentid: apptId || undefined,
             petid,
             date_time,
             symptoms,
             diagnosis,
             medications: medications || undefined,
-            vaccineGiven: vaccineGiven || undefined,
+            vaccinegiven: vaccinegiven || undefined,
             cost,
             notes: notes || undefined
         };
@@ -155,10 +155,10 @@ app.treatments = {
     },
 
     // Delete treatment record and cascade to associated invoice
-    delete: async (treatmentId, petid = null) => {
+    delete: async (treatmentid, petid = null) => {
         if (!confirm('Are you sure you want to delete this treatment record and its associated invoice?')) return;
         try {
-            const res = await fetch(`${app.db.apiURL}/treatments/${treatmentId}`, {
+            const res = await fetch(`${app.db.apiURL}/treatments/${treatmentid}`, {
                 method: 'DELETE'
             });
             if (!res.ok) {

@@ -258,9 +258,9 @@ app.pets = {
         vaccContainer.innerHTML = '';
         
         const vaccineTreatments = petTreatments.filter(t => 
-            t.diagnosis.toLowerCase().includes('vacc') || 
-            t.medications.toLowerCase().includes('vacc') ||
-            t.diagnosis.toLowerCase().includes('shot')
+            String(t.diagnosis || '').toLowerCase().includes('vacc') ||
+            String(t.medications || '').toLowerCase().includes('vacc') ||
+            String(t.diagnosis || '').toLowerCase().includes('shot')
         );
 
         if (vaccineTreatments.length === 0) {

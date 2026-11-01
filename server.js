@@ -441,7 +441,7 @@ app.get('/api/treatments', async (req, res) => {
 });
 
 app.post('/api/treatments', async (req, res) => {
-    const { id, appointmentId, petid, date_time, symptoms, diagnosis, medications, vaccineGiven, cost, notes } = req.body;
+    const { id, appointmentid, petid, date_time, symptoms, diagnosis, medications, vaccinegiven, cost, notes } = req.body;
     if (!petid || !date_time || !symptoms || !diagnosis || isNaN(cost)) {
         return res.status(400).json({ error: 'Required fields missing or invalid.' });
     }
@@ -450,7 +450,7 @@ app.post('/api/treatments', async (req, res) => {
 
     // Invoicing calculations
     const baseConsultation = 50.00;
-    const medsCost = vaccineGiven ? 25.00 : (medications ? 15.00 : 0.00);
+    const medsCost = vaccinegiven ? 25.00 : (medications ? 15.00 : 0.00);
     const subtotal = baseConsultation + medsCost + Number(cost);
     const tax = subtotal * 0.08;
     const total = subtotal + tax;
@@ -466,7 +466,7 @@ app.post('/api/treatments', async (req, res) => {
             // Update treatment
             const { error: tErr } = await supabase
                 .from('treatments')
-                .update({ appointmentId, petid, date_time, symptoms, diagnosis, medications, vaccineGiven, cost, notes })
+                .update({ appointmentid, petid, date_time, symptoms, diagnosis, medications, vaccinegiven, cost, notes })
                 .eq('id', tId);
 
             if (tErr) throw tErr;
@@ -474,15 +474,15 @@ app.post('/api/treatments', async (req, res) => {
             // Update associated invoice (recalculates fees)
             const { error: iErr } = await supabase
                 .from('invoices')
-                .update({ petid, date_time, treatmentCost: cost, medicinecost: medsCost, tax, total, reason: diagnosis })
-                .eq('treatmentId', tId);
+                .update({ petid, date_time, treatmentcost: cost, medicinecost: medsCost, tax, total, reason: diagnosis })
+                .eq('treatmentid', tId);
 
             if (iErr) throw iErr;
         } else {
             // Insert treatment
             const { error: tErr } = await supabase
                 .from('treatments')
-                .insert({ id: tId, appointmentId, petid, date_time, symptoms, diagnosis, medications, vaccineGiven, cost, notes });
+                .insert({ id: tId, appointmentid, petid, date_time, symptoms, diagnosis, medications, vaccinegiven, cost, notes });
 
             if (tErr) throw tErr;
 
@@ -492,11 +492,11 @@ app.post('/api/treatments', async (req, res) => {
                 .from('invoices')
                 .insert({
                     id: invId,
-                    treatmentId: tId,
+                    treatmentid: tId,
                     petid,
                     date_time,
                     consultationfee: baseConsultation,
-                    treatmentCost: cost,
+                    treatmentcost: cost,
                     medicinecost: medsCost,
                     tax,
                     total,
@@ -509,7 +509,7 @@ app.post('/api/treatments', async (req, res) => {
         }
 
         // If vaccine administered, update pet vaccination status automatically
-        if (vaccineGiven) {
+        if (vaccinegiven) {
             const { error: pErr } = await supabase
                 .from('pets')
                 .update({ vaccination: 'Up-to-date' })
@@ -528,7 +528,7 @@ app.delete('/api/treatments/:id', async (req, res) => {
     const { id } = req.params;
     try {
         // Delete associated invoice if any
-        await supabase.from('invoices').delete().eq('treatmentId', id);
+        await supabase.from('invoices').delete().eq('treatmentid', id);
         await supabase.from('invoices').delete().eq('treatmentid', id);
 
         const { error } = await supabase

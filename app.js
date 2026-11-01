@@ -539,13 +539,13 @@ Object.assign(window.app, {
             if (treatmentData) {
                 title.textContent = 'Edit Treatment Record';
                 document.getElementById('treatment-id').value = treatmentData.id;
-                document.getElementById('treatment-appt-id').value = treatmentData.appointmentId || '';
+                document.getElementById('treatment-appt-id').value = treatmentData.appointmentid || '';
                 document.getElementById('treatment-pet').value = treatmentData.petid;
                 document.getElementById('treatment-date').value = treatmentData.date_time;
                 document.getElementById('treatment-symptoms').value = treatmentData.symptoms;
                 document.getElementById('treatment-diagnosis').value = treatmentData.diagnosis;
                 document.getElementById('treatment-meds').value = treatmentData.medications || '';
-                document.getElementById('treatment-vaccine').value = treatmentData.vaccineGiven || '';
+                document.getElementById('treatment-vaccine').value = treatmentData.vaccinegiven || '';
                 document.getElementById('treatment-cost').value = treatmentData.cost;
                 document.getElementById('treatment-notes').value = treatmentData.notes || '';
             } else {
@@ -688,7 +688,7 @@ Object.assign(window.app, {
                 </tr>
                 <tr style="border-bottom: 1px solid #f1f5f9;">
                     <td style="padding: 8px 0; color: #0f172a;">Clinical Treatment (${invoice.reason})</td>
-                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.treatmentCost).toFixed(2)}</td>
+                    <td style="padding: 8px 0; text-align: right; color: #0f172a;">$${Number(invoice.treatmentcost).toFixed(2)}</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #f1f5f9;">
                     <td style="padding: 8px 0; color: #0f172a;">Pharmacy / Medicines</td>
@@ -697,7 +697,7 @@ Object.assign(window.app, {
             `;
 
             // Totals
-            const subtotal = Number(invoice.consultationfee) + Number(invoice.treatmentCost) + Number(invoice.medicinecost);
+            const subtotal = Number(invoice.consultationfee) + Number(invoice.treatmentcost) + Number(invoice.medicinecost);
             const tax = Number(invoice.tax);
             const total = Number(invoice.total);
 
