@@ -835,9 +835,13 @@ Object.assign(window.app, {
 
     // Initialization hook
     init: async () => {
-        await app.db.init();
         app.ui.init();
-        app.router.init();
+        if (app.auth && app.auth.init) {
+            await app.auth.init();
+        } else {
+            await app.db.init();
+            app.router.init();
+        }
     }
 });
 

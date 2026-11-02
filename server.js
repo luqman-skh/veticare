@@ -51,6 +51,53 @@ app.get('/api/health', (req, res) => {
 
 // ==================== REST API ENDPOINTS ====================
 
+// --- Authentication API ---
+app.get('/api/auth/config', (req, res) => {
+    res.json({
+        supabaseUrl: process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '',
+        supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    });
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required.' });
+    }
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        res.json(data);
+    } catch (err) {
+        console.error('Server auth login error:', err);
+        res.status(401).json({ error: err.message || 'Authentication failed' });
+    }
+});
+
+app.post('/api/auth/signup', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required.' });
+    }
+    try {
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        res.json(data);
+    } catch (err) {
+        console.error('Server auth signup error:', err);
+        res.status(400).json({ error: err.message || 'Registration failed' });
+    }
+});
+
+app.post('/api/auth/logout', async (req, res) => {
+    try {
+        await supabase.auth.signOut();
+        res.json({ message: 'Logged out successfully.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- Owners API ---
 app.get('/api/owners', async (req, res) => {
     const { data, error } = await supabase

@@ -12,7 +12,92 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
+    <!-- Supabase Authentication Gate Screen -->
+    <div id="auth-screen" class="auth-screen" style="display: flex;">
+        <div class="auth-decorations">
+            <div class="auth-circle auth-circle-1"></div>
+            <div class="auth-circle auth-circle-2"></div>
+        </div>
+
+        <div class="auth-card">
+            <div class="auth-brand">
+                <div class="auth-logo-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="auth-logo-icon">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        <path d="M19 12H5M12 5v14"/>
+                    </svg>
+                </div>
+                <div class="auth-brand-text">
+                    <h2>VetiCare</h2>
+                    <span class="auth-badge">Clinical Portal</span>
+                </div>
+            </div>
+
+            <div class="auth-titles">
+                <h3 id="auth-heading">Sign In to Clinic Portal</h3>
+                <p id="auth-subheading">Access patient records, schedules, and medical management</p>
+            </div>
+
+            <!-- Auth Mode Segmented Control Tabs -->
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab-btn active" id="auth-tab-signin">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    Sign In
+                </button>
+                <button type="button" class="auth-tab-btn" id="auth-tab-signup">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                    Register Account
+                </button>
+            </div>
+
+            <!-- Dynamic Alert Banners -->
+            <div id="auth-error" class="auth-alert auth-alert-danger" style="display: none;"></div>
+            <div id="auth-notice" class="auth-alert auth-alert-success" style="display: none;"></div>
+
+            <!-- Form -->
+            <form id="auth-form" class="auth-form-body">
+                <div class="form-group">
+                    <label for="auth-email" class="required">Staff / Veterinarian Email</label>
+                    <div class="auth-input-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="auth-box-icon"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L1 7"/></svg>
+                        <input type="email" id="auth-email" placeholder="doctor@veticare.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="auth-password" class="required">Password</label>
+                    <div class="auth-input-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="auth-box-icon"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <input type="password" id="auth-password" placeholder="Enter password (min 6 characters)" required autocomplete="current-password" minlength="6">
+                        <button type="button" class="auth-pwd-toggle" id="auth-toggle-password" title="Toggle password visibility">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="eye-icon"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="auth-row-options" id="auth-meta-row">
+                    <label class="auth-check-label">
+                        <input type="checkbox" id="auth-remember" checked>
+                        <span>Remember session</span>
+                    </label>
+                    <a href="javascript:void(0)" class="auth-link" id="auth-forgot-link">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="primary-btn auth-btn-submit" id="auth-submit-btn">
+                    <span id="auth-submit-text">Sign In</span>
+                    <span class="auth-btn-spinner" id="auth-spinner" style="display: none;"></span>
+                </button>
+            </form>
+
+            <div class="auth-footer-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="auth-shield"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Authenticated via Supabase</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Container -->
+    <div class="app-container" id="app-container" style="display: none;">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -62,11 +147,14 @@
             
             <div class="sidebar-footer">
                 <div class="user-profile">
-                    <div class="user-avatar">SJ</div>
+                    <div class="user-avatar" id="sidebar-user-avatar">DR</div>
                     <div class="user-info">
-                        <span class="user-name">Dr. A. R. Shaikh</span>
-                        <span class="user-role">Lead Vet</span>
+                        <span class="user-name" id="sidebar-user-name">Dr. Staff</span>
+                        <span class="user-role" id="sidebar-user-role">Veterinarian</span>
                     </div>
+                    <button class="signout-btn" id="btn-signout" title="Sign Out of VetiCare">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </button>
                 </div>
             </div>
         </aside>
@@ -1241,6 +1329,7 @@
     <script type="module" src="/vaccinations.js"></script>
     <script type="module" src="/billing.js"></script>
     <script type="module" src="/reports.js"></script>
+    <script type="module" src="/auth.js"></script>
     <script type="module" src="/app.js"></script>
 </body>
 </html>
