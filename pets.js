@@ -245,7 +245,28 @@ app.pets = {
                         <p><strong>Symptoms:</strong> ${t.symptoms}</p>
                         <p><strong>Prescription:</strong> ${t.medications}</p>
                         ${t.notes ? `<p><strong>Notes:</strong> ${t.notes}</p>` : ''}
-                        <span class="treatment-cost-badge">Cost: $${Number(t.cost).toFixed(2)}</span>
+                        ${(() => {
+                            const atts = app.treatments.parseAttachments(t.attachments);
+                            if (atts.length === 0) return '';
+                            return `
+                                <div class="treatment-attachments-bar mt-2">
+                                    <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Diagnostic Reports &amp; Media (${atts.length})</span>
+                                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                        ${atts.map(att => `
+                                            <a href="${att.url}" target="_blank" rel="noopener noreferrer" class="attachment-pill" title="Open ${att.name}">
+                                                <span class="attachment-pill-icon">${app.treatments.getCategoryIcon(att.category, att.type)}</span>
+                                                <span class="attachment-pill-name">${att.name}</span>
+                                                <span class="attachment-pill-tag">${att.category || 'Report'}</span>
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px; height:10px; margin-left: 2px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                            </a>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        })()}
+                        <div style="margin-top: 8px;">
+                            <span class="treatment-cost-badge">Cost: $${Number(t.cost).toFixed(2)}</span>
+                        </div>
                     </div>
                 `;
                 treatmentContainer.appendChild(card);

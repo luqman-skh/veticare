@@ -1121,6 +1121,50 @@
                         <label for="treatment-notes">Internal Notes & Clinical Comments</label>
                         <textarea id="treatment-notes" rows="2" placeholder="Any additional follow-up plans, food advice or advice to owner..."></textarea>
                     </div>
+
+                    <!-- Diagnostic Reports, Imaging & Media Attachments -->
+                    <div class="form-group col-span-2">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="margin-bottom: 0; display: flex; align-items: center; gap: 6px;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; color: var(--color-primary-light);"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                <span>Diagnostic Reports &amp; Media</span>
+                            </label>
+                            <span id="treatment-attachment-count" class="badge" style="background: var(--bg-surface-elevated); font-size: 11px; padding: 2px 8px;">0 attached</span>
+                        </div>
+                        
+                        <div class="treatment-upload-box" id="treatment-upload-dropzone">
+                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+                                <select id="treatment-attachment-category" style="width: auto; min-width: 140px; padding: 6px 12px; font-size: 12px; border-radius: var(--border-radius-pill);">
+                                    <option value="Lab Report">📄 Lab Report</option>
+                                    <option value="X-Ray">🩻 X-Ray</option>
+                                    <option value="ECG">🩺 ECG Report</option>
+                                    <option value="Ultrasound">🔍 Ultrasound</option>
+                                    <option value="Other">📎 Other Document</option>
+                                </select>
+                                
+                                <input type="file" id="treatment-file-input" style="display: none;" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.svg,.doc,.docx,.txt,.dcm">
+                                <button type="button" class="secondary-btn btn-sm" id="btn-browse-attachment" style="padding: 6px 14px; font-size: 12px;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon" style="width:13px; height:13px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    Upload / Browse Files
+                                </button>
+                                <span style="font-size: 11px; color: var(--text-muted);">PDF, JPG, PNG, JPEG, DICOM, DOCX up to 50MB</span>
+                            </div>
+
+                            <!-- Real-time upload progress -->
+                            <div id="treatment-upload-progress" style="display: none; margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+                                    <span id="upload-progress-text">Uploading to Supabase Storage...</span>
+                                    <span id="upload-progress-percent">0%</span>
+                                </div>
+                                <div style="width: 100%; height: 6px; background: var(--bg-surface-elevated); border-radius: 4px; overflow: hidden;">
+                                    <div id="upload-progress-bar" style="width: 0%; height: 100%; background: var(--color-primary); transition: width 0.2s;"></div>
+                                </div>
+                            </div>
+
+                            <!-- List of attached files for this treatment -->
+                            <div class="treatment-attachments-list" id="treatment-attachments-list"></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="secondary-btn" id="cancel-treatment-modal">Cancel</button>

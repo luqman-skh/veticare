@@ -40,6 +40,51 @@ const supabase = createClient(supabaseUrl || '', supabaseKey || '');
 
 console.log(`Supabase client initialized for: ${supabaseUrl ? supabaseUrl : '(not set)'}`);
 
+// Supabase Storage Bucket configuration
+const storageBucketName = process.env.SUPABASE_STORAGE_BUCKET || process.env.VITE_SUPABASE_STORAGE_BUCKET || 'veti-care';
+
+// Helper to safely delete diagnostic files / reports from Supabase Storage
+async function deleteStorageAttachments(attachments) {
+    if (!attachments) return;
+    try {
+        let attList = attachments;
+        if (typeof attList === 'string') {
+            try {
+                attList = JSON.parse(attList);
+            } catch (e) {
+                attList = [];
+            }
+        }
+        if (!Array.isArray(attList) || attList.length === 0) return;
+
+        const paths = [];
+        for (const att of attList) {
+            if (!att) continue;
+            if (att.path) {
+                paths.push(att.path);
+            } else if (att.url) {
+                const parts = att.url.split('/' + storageBucketName + '/');
+                if (parts.length > 1) {
+                    paths.push(decodeURIComponent(parts[1]));
+                }
+            }
+        }
+
+        if (paths.length > 0) {
+            console.log('[Storage] Deleting ' + paths.length + ' file(s) from bucket "' + storageBucketName + '":', paths);
+            const { data, error } = await supabase.storage.from(storageBucketName).remove(paths);
+            if (error) {
+                console.warn('[Storage] Could not remove files from bucket "' + storageBucketName + '":', error.message);
+            } else {
+                console.log('[Storage] Successfully removed files from storage:', data);
+            }
+        }
+    } catch (err) {
+        console.error('[Storage] Error in deleteStorageAttachments:', err);
+    }
+}
+
+
 // Health check endpoint for cloud deployment platforms (Render, Railway, AWS, etc.)
 app.get('/api/health', (req, res) => {
     res.json({
@@ -162,6 +207,29 @@ app.delete('/api/owners/:id', async (req, res) => {
         const petIds = (pets || []).map(p => p.id);
 
         if (petIds.length > 0) {
+            // Delete storage attachments for all treatments belonging to these pets
+            try {
+                let { data: ownerTreatments } = await supabase
+                    .from('treatments')
+                    .select('attachments')
+                    .in('petid', petIds);
+
+                if (!ownerTreatments || ownerTreatments.length === 0) {
+                    const res2 = await supabase.from('treatments').select('attachments').in('petId', petIds);
+                    ownerTreatments = res2.data;
+                }
+
+                if (ownerTreatments && ownerTreatments.length > 0) {
+                    for (const t of ownerTreatments) {
+                        if (t && t.attachments) {
+                            await deleteStorageAttachments(t.attachments);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[Storage] Error cleaning up owner attachments:', e.message);
+            }
+
             // Delete invoices for these pets
             await supabase.from('invoices').delete().in('petid', petIds);
             await supabase.from('invoices').delete().in('petId', petIds);
@@ -320,6 +388,29 @@ app.post('/api/pets', async (req, res) => {
 app.delete('/api/pets/:id', async (req, res) => {
     const { id } = req.params;
     try {
+        // Query and delete storage attachments for treatments of this pet
+        try {
+            let { data: petTreatments } = await supabase
+                .from('treatments')
+                .select('attachments')
+                .eq('petid', id);
+
+            if (!petTreatments || petTreatments.length === 0) {
+                const res2 = await supabase.from('treatments').select('attachments').eq('petId', id);
+                petTreatments = res2.data;
+            }
+
+            if (petTreatments && petTreatments.length > 0) {
+                for (const t of petTreatments) {
+                    if (t && t.attachments) {
+                        await deleteStorageAttachments(t.attachments);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[Storage] Error cleaning up pet attachments:', e.message);
+        }
+
         // Delete all associated invoices, treatments, appointments for this pet
         await supabase.from('invoices').delete().eq('petid', id);
         await supabase.from('invoices').delete().eq('petId', id);
@@ -493,7 +584,7 @@ app.get('/api/treatments', async (req, res) => {
 });
 
 app.post('/api/treatments', async (req, res) => {
-    const { id, appointmentid, petid, date_time, symptoms, diagnosis, medications, vaccinegiven, cost, notes, payment_status, payment_method } = req.body;
+    const { id, appointmentid, petid, date_time, symptoms, diagnosis, medications, vaccinegiven, cost, notes, payment_status, payment_method, attachments } = req.body;
     if (!petid || !date_time || !symptoms || !diagnosis || isNaN(cost)) {
         return res.status(400).json({ error: 'Required fields missing or invalid.' });
     }
@@ -516,12 +607,15 @@ app.post('/api/treatments', async (req, res) => {
 
         if (existingTreatment) {
             // Update treatment
-            const { error: tErr } = await supabase
-                .from('treatments')
-                .update({ appointmentid, petid, date_time, symptoms, diagnosis, medications, vaccinegiven, cost, notes })
-                .eq('id', tId);
+            const treatmentBase = { appointmentid, petid, date_time, symptoms, diagnosis, medications, vaccinegiven, cost, notes };
+            const treatmentWithAtt = { ...treatmentBase, attachments: attachments || [] };
+            let updateRes = await supabase.from('treatments').update(treatmentWithAtt).eq('id', tId);
+            if (updateRes.error && String(updateRes.error.message || '').includes('attachments')) {
+                console.warn('[NOTICE] Supabase treatments table missing "attachments" column. Please run SQL migration.');
+                updateRes = await supabase.from('treatments').update(treatmentBase).eq('id', tId);
+            }
+            if (updateRes.error) throw updateRes.error;
 
-            if (tErr) throw tErr;
 
             // Update associated invoice (recalculates fees)
             const invUpdateData = { petid, date_time, treatmentcost: cost, medicinecost: medsCost, tax, total, reason: diagnosis };
@@ -537,11 +631,15 @@ app.post('/api/treatments', async (req, res) => {
             if (iErr) throw iErr;
         } else {
             // Insert treatment
-            const { error: tErr } = await supabase
-                .from('treatments')
-                .insert({ id: tId, appointmentid, petid, date_time, symptoms, diagnosis, medications, vaccinegiven, cost, notes });
+            const treatmentBase = { appointmentid, petid, date_time, symptoms, diagnosis, medications, vaccinegiven, cost, notes };
+            const treatmentWithAtt = { ...treatmentBase, attachments: attachments || [] };
+            let insertRes = await supabase.from('treatments').insert({ id: tId, ...treatmentWithAtt });
+            if (insertRes.error && String(insertRes.error.message || '').includes('attachments')) {
+                console.warn('[NOTICE] Supabase treatments table missing "attachments" column. Please run SQL migration.');
+                insertRes = await supabase.from('treatments').insert({ id: tId, ...treatmentBase });
+            }
+            if (insertRes.error) throw insertRes.error;
 
-            if (tErr) throw tErr;
 
             // Insert new invoice (defaulting to Paid unless specified)
             const invId = 'INV-' + (Math.floor(Math.random() * 9000) + 1000);
@@ -586,9 +684,24 @@ app.post('/api/treatments', async (req, res) => {
 app.delete('/api/treatments/:id', async (req, res) => {
     const { id } = req.params;
     try {
+        // Query treatment to delete its storage attachments from bucket
+        try {
+            const { data: treatment } = await supabase
+                .from('treatments')
+                .select('attachments')
+                .eq('id', id)
+                .maybeSingle();
+
+            if (treatment && treatment.attachments) {
+                await deleteStorageAttachments(treatment.attachments);
+            }
+        } catch (e) {
+            console.warn('[Storage] Error querying treatment attachments:', e.message);
+        }
+
         // Delete associated invoice if any
         await supabase.from('invoices').delete().eq('treatmentid', id);
-        await supabase.from('invoices').delete().eq('treatmentid', id);
+        await supabase.from('invoices').delete().eq('treatmentId', id);
 
         const { error } = await supabase
             .from('treatments')

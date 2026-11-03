@@ -664,6 +664,40 @@ Object.assign(window.app, {
                 document.getElementById('treatment-date').value = localISOTime;
             }
 
+                        // Initialize modal attachments
+            if (app.treatments) {
+                app.treatments.modalAttachments = app.treatments.parseAttachments(treatmentData ? treatmentData.attachments : []);
+                app.treatments.renderModalAttachments();
+            }
+
+            // Bind upload browse & drag-and-drop
+            const browseBtn = document.getElementById('btn-browse-attachment');
+            const fileInput = document.getElementById('treatment-file-input');
+            const dropzone = document.getElementById('treatment-upload-dropzone');
+
+            if (browseBtn && fileInput) {
+                browseBtn.onclick = () => fileInput.click();
+                fileInput.onchange = (e) => {
+                    app.treatments.handleFileUpload(e.target.files);
+                    fileInput.value = '';
+                };
+            }
+
+            if (dropzone) {
+                dropzone.ondragover = (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('dragover');
+                };
+                dropzone.ondragleave = () => dropzone.classList.remove('dragover');
+                dropzone.ondrop = (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('dragover');
+                    if (e.dataTransfer && e.dataTransfer.files) {
+                        app.treatments.handleFileUpload(e.dataTransfer.files);
+                    }
+                };
+            }
+
             modal.classList.add('active');
         },
 

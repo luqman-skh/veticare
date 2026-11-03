@@ -2721,3 +2721,124 @@ html[data-theme="light"] .moon-icon { display: block; }
     border-color: var(--color-danger);
     transform: scale(1.05);
 }
+
+/* ===================================================
+   Diagnostic Reports, Media & Attachments
+   =================================================== */
+
+.treatment-upload-box {
+    background: var(--bg-surface);
+    border: 1.5px dashed var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 16px;
+    transition: all var(--transition-fast);
+}
+
+.treatment-upload-box.dragover {
+    border-color: var(--color-primary);
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.treatment-attachments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.modal-attachment-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    padding: 8px 12px;
+    font-size: 13px;
+    gap: 10px;
+}
+
+.modal-attachment-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+.modal-attachment-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.modal-attachment-name {
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modal-attachment-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.modal-attachment-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* Attachment View Pills on Cards */
+.treatment-attachments-bar {
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.attachment-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-pill);
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-main);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    max-width: 260px;
+}
+
+.attachment-pill:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+}
+
+.attachment-pill-icon {
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.attachment-pill-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.attachment-pill-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: var(--border-radius-pill);
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--color-primary-light);
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
